@@ -3,15 +3,22 @@ const validator = require('validator');
 const passportLocalMongoose = require('passport-local-mongoose');
 
 const Schema = mongoose.Schema;
+const { titleCase } = require('../utils/utils');
 
 const userSchema = new Schema({
     name: {
         type: String,
         required: true,
         set: titleCase,
-        validate: (value) => {
-            return /[a-zA-Z ]+/.test(value)
-        }
+        match: /[a-zA-Z ]+/
+    },
+    salt: {
+        type: String,
+        required: true,
+    },
+    hash: {
+        type: String,
+        requried: true,
     },
     admin: {
         type: Boolean,
@@ -20,34 +27,43 @@ const userSchema = new Schema({
     email: {
         type: String,
         lowercase: true,
+        trim: true,
+        index: { unique: true, sparse: true },
         validate: (value) => {
-            return validator.isEmail(value);
+            return !value || validator.isEmail(value);
         }
     },
     mobile: {
         type: String,
+        trim: true,
+        index: { unique: true, sparse: true },
         validate: (value) => {
-            return validator.isMobilePhone(value);
+            return !value || validator.isMobilePhone(value);
         }
     },
     image: {
         type: String,
+        trim: true
     },
     address: {
         country: {
             type: String,
+            trim: true,
             default: 'Bangladesh'
         },
         district: {
-            type: String, 
+            type: String,
+            trim: true,
             default: ''
         },
         thana: {
             type: String,
+            trim: true,
             default: ''
         },
         region: {
             type: String,
+            trim: true,
             default: ''
         },
         postalCode: {
@@ -55,6 +71,7 @@ const userSchema = new Schema({
         },
         homeLocation: {
             type: String,
+            trim: true,
             default: ''
         }
     }
@@ -62,17 +79,10 @@ const userSchema = new Schema({
     timestamps: true
 })
 
-const titleCase = (name) => {
-    return name
-        .trim()
-        .toLowerCase()
-        .split(/[ \t]+/)
-        .map(word => word.charAt[0].toUpperCase() + word.slice(1))
-        .join(' ');
-};
 
 userSchema.plugin(passportLocalMongoose, {
-    usernameField: 'mobile'
+    usernameField: 'mobile',
+    usernameQueryFields: ['email']
 });
 
 const Users = mongoose.model('User', userSchema);

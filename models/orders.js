@@ -4,7 +4,65 @@ const validator = require('validator');
 
 require('mongoose-currency').loadType(mongoose);
 const Currency = mongoose.Types.Currency;
+const { titleCase } = require('../utils/utils');
 
+const shippingSchema = new Schema({
+    customer: {
+        type: String,
+        required: true,
+        set: titleCase
+    },
+    country: {
+        type: String,
+        default: 'Bangladesh',
+        trim: true
+    },
+    district: {
+        type: String,
+        default: '',
+        trim: true
+    },
+    thana: {
+        type: String,
+        default: '',
+        trim: true
+    },
+    region: {
+        type: String,
+        default: '',
+        trim: true
+    },
+    postalCode: {
+        type: Number,
+    },
+    homeLocation: {
+        type: String,
+        default: '',
+        trim: true
+    },
+    deliveryNotes: {
+        type: String,
+        trim: true
+    },
+    mobile: {
+        type: String,
+        trim: true,
+        validate: value => !value || validator.isMobilePhone(value)
+    }
+});
+
+const productSchema = Schema({
+    product: {
+        type: Schema.Types.ObjectId,
+        ref: 'Product',
+        required: true
+    },
+    quantity: {
+        type: Number,
+        min: 1,
+        required: true
+    }
+});
 
 const orderSchema = new Schema({
     user: {
@@ -16,11 +74,13 @@ const orderSchema = new Schema({
     payment: {
         method: {
             type: String,
-            required: true
+            required: true,
+            trim: true
         },
         transactionId: {
             type: String,
-            default: ''
+            default: '',
+            trim: true
         }
     },
     products: {
@@ -42,65 +102,18 @@ const orderSchema = new Schema({
         ref: 'Voucher'
     },
     deliveryAgent: {
-        type: String
+        type: String,
+        trim: true
     },
     parcelId: {
-        type: String
+        type: String,
+        trim: true
     }
 }, {
     timestamps: true
 })
 
-const shippingSchema = new Schema({
-    customer: {
-        type: String,
-        required: true
-    },
-    country: {
-        type: String,
-        default: 'Bangladesh',
-        
-    },
-    district: {
-        type: String,
-        default: '',
-    },
-    thana: {
-        type: String,
-        default: '',
-    },
-    region: {
-        type: String,
-        default: ''
-    },
-    postalCode: {
-        type: Number,
-    },
-    homeLocation: {
-        type: String,
-        default: ''
-    },
-    deliveryNotes: {
-        type: String
-    },
-    mobile: {
-        type: String,
-        validate: value => validator.isMobilePhone(value)
-    }
-});
 
-const productSchema = Schema({
-    product: {
-        type: Schema.Types.ObjectId,
-        ref: 'Product',
-        required: true
-    },
-    quantity: {
-        type: Number,
-        min: 1,
-        required: true
-    }
-});
 
 const Orders = mongoose.model('Order', orderSchema);
 

@@ -4,11 +4,50 @@ const Schema = mongoose.Schema;
 require('mongoose-currency').loadType(mongoose);
 const Currency = mongoose.Types.Currency;
 
+const featureSchema = Schema({
+    heading: {
+        type: String,
+        default: '',
+        trim: true
+    },
+    description: {
+        type: String,
+        default: '',
+        trim: true
+    }
+});
+
+const reviewSchema = Schema({
+    user: {
+        type: Schema.Types.ObjectId,
+        ref: 'User'
+    },
+    rating: {
+        type: Number,
+        required: true,
+        enum: [1, 2, 3, 4, 5]
+    },
+    heading: {
+        type: String,
+        minlength: 1,
+        maxlength: 50,
+        required: true,
+        trim: true
+    },
+    description: {
+        type: String,
+        trim: true
+    },
+}, {
+    timestamps: true
+});
+
 const productSchema = new Schema({
     title: {
         type: String,
         required: true,
-        unique: true
+        unique: true,
+        trim: true
     },
     price: {
         type: Currency,
@@ -23,7 +62,8 @@ const productSchema = new Schema({
     },
     image: {
         type: String,
-        required: true
+        required: true,
+        trim: true
     },
     quantity: {
         type: Number,
@@ -36,6 +76,7 @@ const productSchema = new Schema({
     },
     sku: {
         type: String,
+        trim: true
     },
     categories: {
         type: [String],
@@ -59,39 +100,7 @@ const productSchema = new Schema({
     timestamps: true
 })
 
-const featureSchema = Schema({
-    heading: {
-        type: String,
-        default: ''
-    },
-    description: {
-        type: String,
-        default: ''
-    }
-});
 
-const reviewSchema = Schema({
-    user: {
-        type: Schema.Types.ObjectId,
-        ref: 'User'
-    },
-    rating: {
-        type: Number,
-        required: true,
-        enum: [1, 2, 3, 4, 5]
-    },
-    heading: {
-        type: String,
-        minlength: 1,
-        maxlength: 50,
-        required: true
-    },
-    description: {
-        type: String
-    },
-}, {
-    timestamps: true
-});
 
 const Products = mongoose.model('Product', productSchema);
 
