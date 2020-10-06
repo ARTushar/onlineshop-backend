@@ -2,16 +2,19 @@ const passport = require('passport');
 const crypto = require('crypto'); 
 
 const LocalStrategy = require('passport-local').Strategy;
-const JwtStrategy = require('passport-jwt').ExtractJwt;
+const JwtStrategy = require('passport-jwt').Strategy;
 const ExtractJwt = require('passport-jwt').ExtractJwt;
 const fs = require('fs');
 const path = require('path');
 const User = require('../models/users');
+const jwt = require('jsonwebtoken');
 
-const pathToKey = path.join(__dirname, 'rsa_public.pem');
-const PUBLIC_KEY = fs.readFileSync(pathToKey, 'utf-8');
+const pathToPublicKey = path.join(__dirname, 'rsa_public.pem');
+const PUBLIC_KEY = fs.readFileSync(pathToPublicKey, 'utf-8');
+const pathToPrivateKey = path.join(__dirname, 'rsa_private.pem');
+const PRIVATE_KEY = fs.readFileSync(pathToPrivateKey,'utf-8');
 
-passport.use(new LocalStrategy(User.authenticate()));
+passport.use(User.createStrategy());
 passport.serializeUser(User.serializeUser());
 passport.deserializeUser(User.deserializeUser())
 
@@ -19,6 +22,18 @@ const options = {
     jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
     secretOrKey: PUBLIC_KEY,
     algorithms: ['RS256']
+}
+
+exports.getToken = (user) => {
+    const _id = user._id;
+    const expiresIn = '1d';
+
+    const payload = {
+        _id,
+        iat: Date.now()
+    };
+    const signedToken = jwt.sign(payload, PRIVATE_KEY, { expiresIn: expiresIn, algorithm: 'RS256'})
+    return signedToken;
 }
 
 exports.jwtPassport = passport.use(new JwtStrategy(options, (jwt_payload, done) => {

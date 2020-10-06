@@ -3,7 +3,7 @@ const validator = require('validator');
 const passportLocalMongoose = require('passport-local-mongoose');
 
 const Schema = mongoose.Schema;
-const { titleCase } = require('../utils/utils');
+const { titleCase } = require('../lib/utils');
 
 const userSchema = new Schema({
     name: {

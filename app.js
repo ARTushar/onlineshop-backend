@@ -5,10 +5,10 @@ var cookieParser = require('cookie-parser');
 var logger = require('morgan');
 const mongoose = require('mongoose');
 const { DATABASE_URL } = require('./config//config');
-
 var indexRouter = require('./routes/index');
 var usersRouter = require('./routes/userRouter');
 const passport = require('passport');
+require('./config/authenticate');
 const helmet = require('helmet');
 
 // databse connection
@@ -24,11 +24,15 @@ connect.then((db) => {
 
 var app = express();
 
+// app.use('*', (req, res, next) => {
+//     console.log('req : ' + JSON.stringify(req));
+//     next()
+// })
 app.use(logger('dev'));
 app.use(helmet());
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
-app.use(cookieParser());
+// app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
 app.use(passport.initialize());

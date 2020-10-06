@@ -16,6 +16,7 @@ const { PORT } =  require('../config/config');
 var port = normalizePort(PORT || '3000');
 app.set('port', port);
 
+console.log('port: ' + port);
 /**
  * Create HTTP server.
  */

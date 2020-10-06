@@ -4,7 +4,7 @@ const validator = require('validator');
 
 require('mongoose-currency').loadType(mongoose);
 const Currency = mongoose.Types.Currency;
-const { titleCase } = require('../utils/utils');
+const { titleCase } = require('../lib/utils');
 
 const shippingSchema = new Schema({
     customer: {

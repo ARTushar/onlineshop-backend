@@ -11,7 +11,7 @@ connect.then((db) => {
     console.log('Connected correctly to the server');
 }, (err) => { console.log(err)});
 
-/* const User = require('./models/users');
+const User = require('./models/users');
 
 User.register(new User({ name: ' art ', mobile: '018646512299'}), 'tushar', (err, user) => {
     if (err){
@@ -24,6 +24,6 @@ User.register(new User({ name: ' art ', mobile: '018646512299'}), 'tushar', (err
             else console.log(JSON.stringify(user))
         })
     }
-}) */
+})
 // mongoose.connection.close();
 mongoose.disconnect();
