@@ -5,7 +5,11 @@ dotenv.config();
 module.exports = {
     DATABASE_URL: process.env.DATABASE_URL,
     PORT:  process.env.PORT,
-    WHITELIST: [process.env.WHITELIST_1, process.env.WHITELIST_2, process.env.WHITELIST_3]
+    WHITELIST: [process.env.WHITELIST_1, process.env.WHITELIST_2, process.env.WHITELIST_3],
+    FACEBOOK: {
+        clientId: process.env.CLIENT_ID,
+        clientSecret: process.env.CLIENT_SECRET
+    },
 };
 
 

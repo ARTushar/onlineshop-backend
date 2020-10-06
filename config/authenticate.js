@@ -4,10 +4,12 @@ const crypto = require('crypto');
 const LocalStrategy = require('passport-local').Strategy;
 const JwtStrategy = require('passport-jwt').Strategy;
 const ExtractJwt = require('passport-jwt').ExtractJwt;
+const FacebookTokenStrategy = require('passport-facebook-token');
 const fs = require('fs');
 const path = require('path');
 const User = require('../models/users');
 const jwt = require('jsonwebtoken');
+const { FACEBOOK } = require('./config');
 
 const pathToPublicKey = path.join(__dirname, 'rsa_public.pem');
 const PUBLIC_KEY = fs.readFileSync(pathToPublicKey, 'utf-8');
@@ -60,3 +62,33 @@ exports.verifyAdmin = (req, res, next) => {
         return next(err);
     }
 }
+
+// console.log(FACEBOOK);
+
+exports.facebookPassport = passport.use(new FacebookTokenStrategy({
+    clientID: FACEBOOK.clientId,
+    clientSecret: FACEBOOK.clientSecret
+}, (accessToken, refreshToken, profile, done) => {
+    User.findOne({ facebookId: profile.id }, (err, user) => {
+        if (err) {
+            return done(err, false);
+        }
+        if (!err && user !== null) {
+            return done(null, user);
+        } else {
+            console.log(JSON.stringify(profile));
+            user = new User({ name: profile.displayName });
+            user.facebookId = profile.id;
+            if (profile.email)
+                user.email = profile.email;
+            // if(profile.)
+            user.save((err, user) => {
+                if (err)
+                    return done(err, false);
+                else
+                    return done(null, user);
+            })
+        }
+    });
+}
+));

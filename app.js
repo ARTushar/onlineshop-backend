@@ -4,14 +4,17 @@ var path = require('path');
 var cookieParser = require('cookie-parser');
 var logger = require('morgan');
 const mongoose = require('mongoose');
-const { DATABASE_URL } = require('./config//config');
+const { DATABASE_URL } = require('./config/config');
 var indexRouter = require('./routes/index');
 var usersRouter = require('./routes/userRouter');
 const passport = require('passport');
 require('./config/authenticate');
 const helmet = require('helmet');
+const { cors, corsWithOptions } = require('./routes/cors');
+
 
 // databse connection
+console.log(DATABASE_URL);
 const connect = mongoose.connect(DATABASE_URL, {
     useCreateIndex: true,
     useNewUrlParser: true,
@@ -23,6 +26,16 @@ connect.then((db) => {
 }, (err) => { console.log(err)});
 
 var app = express();
+
+
+//secure traffic only
+// app.all('*', cors, (req, res, next) => {
+//     if(req.secure) {
+//         return next();
+//     } else {
+//         res.redirect(307, 'https://' + req.hostname + ":" + app.get('secPort') + req.url);
+//     }
+// });
 
 // app.use('*', (req, res, next) => {
 //     console.log('req : ' + JSON.stringify(req));

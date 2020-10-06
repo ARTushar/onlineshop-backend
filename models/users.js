@@ -45,6 +45,11 @@ const userSchema = new Schema({
         type: String,
         trim: true
     },
+    facebookId: {
+        type: String,
+        trim: true,
+        index: { unique: true, sparse: true }
+    },
     address: {
         country: {
             type: String,

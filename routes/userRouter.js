@@ -16,10 +16,11 @@ router.get('/', cors.corsWithOptions, authenticate.verifyUser, authenticate.veri
         .catch((err) => next(err));
 });
 
-router.post('/signup', cors.corsWithOptions, (req, res, next) => {
+router.post('/register', cors.corsWithOptions, (req, res, next) => {
     User.register(new User({name: req.body.name, mobile: req.body.mobile }), req.body.password, (err, user) => {
         if (err) {
             res.statusCode = 500;
+            console.log(JSON.stringify(err));
             res.json({ err: err });
         } else {
             user.save((err, user) => {
@@ -39,6 +40,7 @@ router.post('/signup', cors.corsWithOptions, (req, res, next) => {
 });
 
 router.post('/login', cors.corsWithOptions, (req, res, next) => {
+    console.log(JSON.stringify(req.body));
     if(req.body.username.indexOf('@') == -1) 
         req.body.mobile = req.body.username;
     else 
@@ -59,6 +61,7 @@ router.post('/login', cors.corsWithOptions, (req, res, next) => {
                 res.json({ success: false, status: 'Login unsuccessful!', err: 'Could not log in user!' });
             }
             let token = authenticate.getToken(req.user);
+            console.log('validated: ' + token);
             res.statusCode = 200;
             res.json({ success: true, token: token, status: 'Login successfull!' });
         });
@@ -123,5 +126,15 @@ router.get('/checkJWTtoken', cors.corsWithOptions, (req, res) => {
         }
     })(req, res);
 });
+
+// router.get('/facebook/token', cors.corsWithOptions, passport.authenticate('facebook-token'), (req, res, next) => {
+//     if(req.user){
+//         const token = authenticate.getToken(req.user);
+//         res.status(200).json({success: true,
+//             token,
+//             status: 'Login Successfull'
+//         });
+//     }
+// });
 
 module.exports = router;
