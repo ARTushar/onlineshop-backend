@@ -6,7 +6,7 @@ const authenticate = require('../config/authenticate');
 const cors = require('./cors');
 
 /* GET users listing. */
-router.options('*', cors.corsWithOptions, (req, res) => { res.sendStatus(200); })
+router.options('*', cors.corsWithOptions, (req, res) => { res.sendStatus(200); });
 router.get('/', cors.corsWithOptions, authenticate.verifyUser, authenticate.verifyAdmin, function (req, res, next) {
     User.find({})
         .then((users) => {

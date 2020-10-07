@@ -1,38 +1,21 @@
 const mongoose = require('mongoose');
+const slug = require('mongoose-slug-generator');
+mongoose.plugin(slug);
 const Schema = mongoose.Schema;
 
 require('mongoose-currency').loadType(mongoose);
 const Currency = mongoose.Types.Currency;
 
-const featureSchema = Schema({
-    heading: {
-        type: String,
-        default: '',
-        trim: true
-    },
-    description: {
-        type: String,
-        default: '',
-        trim: true
-    }
-});
-
 const reviewSchema = Schema({
-    user: {
+    author: {
         type: Schema.Types.ObjectId,
-        ref: 'User'
+        ref: 'User',
+        required: true
     },
     rating: {
         type: Number,
         required: true,
         enum: [1, 2, 3, 4, 5]
-    },
-    heading: {
-        type: String,
-        minlength: 1,
-        maxlength: 50,
-        required: true,
-        trim: true
     },
     description: {
         type: String,
@@ -42,12 +25,38 @@ const reviewSchema = Schema({
     timestamps: true
 });
 
+const questionAnswerSchema = Schema({
+    author: {
+        type: Schema.Types.ObjectId,
+        ref: 'User',
+        required: true
+    },
+    question: {
+        type: String,
+        minlength: 1,
+        maxlength: 100,
+        required: true,
+        trim: true
+    },
+    answer: {
+        type: String,
+        trim: true
+    },
+}, {
+    timestamps: true
+});
+
+
 const productSchema = new Schema({
     title: {
         type: String,
         required: true,
         unique: true,
         trim: true
+    },
+    slug: {
+        type: String,
+        slug: "title"
     },
     price: {
         type: Currency,
@@ -85,7 +94,7 @@ const productSchema = new Schema({
         }
     },
     features:  {
-        type: [featureSchema]
+        type: [String]
     },
     specifications: {
         type: [String]
@@ -95,6 +104,9 @@ const productSchema = new Schema({
     },
     reviews: {
         type: [reviewSchema]
+    },
+    questionAnswer: {
+        type: [questionAnswerSchema]
     }
 }, {
     timestamps: true

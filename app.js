@@ -1,16 +1,17 @@
-var createError = require('http-errors');
-var express = require('express');
-var path = require('path');
-var cookieParser = require('cookie-parser');
-var logger = require('morgan');
+const createError = require('http-errors');
+const express = require('express');
+const path = require('path');
+const cookieParser = require('cookie-parser');
+const logger = require('morgan');
 const mongoose = require('mongoose');
 const { DATABASE_URL } = require('./config/config');
-var indexRouter = require('./routes/index');
-var usersRouter = require('./routes/userRouter');
+const indexRouter = require('./routes/index');
+const usersRouter = require('./routes/userRouter');
 const passport = require('passport');
 require('./config/authenticate');
 const helmet = require('helmet');
-const { cors, corsWithOptions } = require('./routes/cors');
+const productRouter = require('./routes/productRouter');
+// const { cors, corsWithOptions } = require('./routes/cors');
 
 
 // databse connection
@@ -37,13 +38,10 @@ var app = express();
 //     }
 // });
 
-// app.use('*', (req, res, next) => {
-//     console.log('req : ' + JSON.stringify(req));
-//     next()
-// })
 app.use(logger('dev'));
 app.use(helmet());
 app.use(express.json());
+
 app.use(express.urlencoded({ extended: false }));
 // app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
@@ -51,6 +49,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use(passport.initialize());
 app.use('/', indexRouter);
 app.use('/users', usersRouter);
+app.use('/products', productRouter);
 
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {
@@ -60,10 +59,14 @@ app.use(function (req, res, next) {
 // error handler
 app.use(function (err, req, res, next) {
     // set locals, only providing error in development
+    // if (err instanceof SyntaxError && err.status === 400 && 'body' in err) {
+    //     res.status(400).json({err: 'Bad JSON'});
+    // }
     res.locals.message = err.message;
     res.locals.error = req.app.get('env') === 'development' ? err : {};
 
     res.status(err.status || 500);
+    res.json(err.message || {err: "Something went wrong"});
 })
 
 
