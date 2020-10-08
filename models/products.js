@@ -105,7 +105,7 @@ const productSchema = new Schema({
     reviews: {
         type: [reviewSchema]
     },
-    questionAnswer: {
+    questionAnswers: {
         type: [questionAnswerSchema]
     }
 }, {
