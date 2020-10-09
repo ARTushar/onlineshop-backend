@@ -3,7 +3,7 @@ const validator = require('validator');
 const passportLocalMongoose = require('passport-local-mongoose');
 
 const Schema = mongoose.Schema;
-const { titleCase } = require('../lib/utils');
+const { titleCase, addCountryCode } = require('../lib/utils');
 
 const userSchema = new Schema({
     name: {
@@ -37,6 +37,9 @@ const userSchema = new Schema({
         type: String,
         trim: true,
         index: { unique: true, sparse: true },
+        minlength: 11,
+        maxlength: 14,
+        set: addCountryCode,
         validate: (value) => {
             return !value || validator.isMobilePhone(value);
         }

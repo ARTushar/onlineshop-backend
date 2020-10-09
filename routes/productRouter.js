@@ -3,7 +3,6 @@ const productRouter = express.Router();
 const Products = require('../models/products');
 const authenticate = require('../config/authenticate');
 const cors = require('./cors');
-const { json } = require('express');
 
 /*  Handle cors. */
 

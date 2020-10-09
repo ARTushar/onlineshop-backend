@@ -4,12 +4,13 @@ const validator = require('validator');
 
 require('mongoose-currency').loadType(mongoose);
 const Currency = mongoose.Types.Currency;
-const { titleCase } = require('../lib/utils');
+const { titleCase, addCountryCode } = require('../lib/utils');
+
+
 
 const shippingSchema = new Schema({
     customer: {
         type: String,
-        required: true,
         set: titleCase
     },
     country: {
@@ -47,7 +48,11 @@ const shippingSchema = new Schema({
     mobile: {
         type: String,
         trim: true,
-        validate: value => !value || validator.isMobilePhone(value)
+        required: true,
+        minlength: 11,
+        maxlength: 14,
+        set: addCountryCode,
+        validate: validator.isMobilePhone(value)
     }
 });
 
@@ -70,7 +75,10 @@ const orderSchema = new Schema({
         ref: 'User',
         required: true
     },
-    shippingAddress: shippingSchema,
+    shippingAddress: {
+        type: shippingSchema,
+        required: true
+    },
     payment: {
         method: {
             type: String,
