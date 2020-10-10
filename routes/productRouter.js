@@ -16,10 +16,11 @@ productRouter.route('/')
       .catch(err => next(err));
   })
   .post(cors.corsWithOptions, authenticate.verifyUser, authenticate.verifyAdmin, (req, res, next) => {
-    console.log('product posting');
+    if (req.body._id) delete req.body._id;
+    if (req.body.createdAt) delete req.body.createdAt;
+    if (req.body.updatedAt) delete req.body.updatedAt;
     Products.create(req.body)
       .then((product) => {
-        console.log('product created ', product);
         res.status(200).json(product);
       }, (err) => next(err)
       )
@@ -70,23 +71,23 @@ productRouter.route('/:productId/reviews')
     Products.findById(req.params.productId, 'reviews')
       .populate('reviews.author', 'name')
       .then((product) => {
-        if(product)
+        if (product)
           res.status(200).json(product.reviews);
         else {
           let err = new Error('Product ' + req.params.productId + " not found");
           err.status = 404;
           return next(err);
-        } 
+        }
       }, (err) => next(err))
       .catch((err) => next(err));
   })
   .post(cors.corsWithOptions, authenticate.verifyUser, (req, res, next) => {
     if (req.body) {
-      if(req.body._id) delete req.body._id;
-      if(req.body.createdAt) delete req.body.createdAt;
-      if(req.body.updatedAt) delete req.body.updatedAt;
+      if (req.body._id) delete req.body._id;
+      if (req.body.createdAt) delete req.body.createdAt;
+      if (req.body.updatedAt) delete req.body.updatedAt;
       req.body.author = req.user._id;
-      Products.updateOne({ _id: req.params.productId, 'reviews.author': { $ne: req.user._id } },
+      Products.updateOne({ _id: req.params.productId, 'reviews.author': {$or: [null, {$ne: req.user._id }]} },
         { $push: { reviews: req.body } }, { upsert: true })
         .then((resp) => {
           Products.findById(req.params.productId, 'reviews')
@@ -294,22 +295,22 @@ productRouter.route('/:productId/questions')
     Products.findById(req.params.productId, 'questionAnswer')
       .populate('questionAnswer.author', 'name')
       .then((product) => {
-        if(product)
+        if (product)
           res.status(200).json(product.questionAnswers);
         else {
           let err = new Error('Product ' + req.params.productId + " not found");
           err.status = 404;
           return next(err);
-        } 
+        }
       }, (err) => next(err))
       .catch((err) => next(err));
   })
   .post(cors.corsWithOptions, authenticate.verifyUser, (req, res, next) => {
     if (req.body) {
-      if(req.body.answer) delete req.body.answer;
-      if(req.body._id) delete req.body._id;
-      if(req.body.createdAt) delete req.body.createdAt;
-      if(req.body.updatedAt) delete req.body.updatedAt;
+      if (req.body.answer) delete req.body.answer;
+      if (req.body._id) delete req.body._id;
+      if (req.body.createdAt) delete req.body.createdAt;
+      if (req.body.updatedAt) delete req.body.updatedAt;
 
       Products.findById(req.params.productId, 'questionAnswers')
         .then((product) => {
@@ -373,7 +374,7 @@ productRouter.route('/:productId/questions/:questionId')
           err.status = 404;
           return next(err);
         } else {
-          let err = new Error('Question ' + req.params.questionId+ " not found");
+          let err = new Error('Question ' + req.params.questionId + " not found");
           err.status = 404;
           return next(err);
         }
@@ -406,7 +407,7 @@ productRouter.route('/:productId/questions/:questionId')
           err.status = 404;
           return next(err);
         } else {
-          let err = new Error('Question ' + req.params.questionId+ ' not found');
+          let err = new Error('Question ' + req.params.questionId + ' not found');
           err.status = 404;
           return next(err);
         }
@@ -436,7 +437,7 @@ productRouter.route('/:productId/questions/:questionId')
           return next(err);
         }
         else {
-          err = new Error('Question ' + req.params.questionId+ ' not found');
+          err = new Error('Question ' + req.params.questionId + ' not found');
           err.status = 404;
           return next(err);
         }
@@ -465,7 +466,7 @@ productRouter.route('/:productId/questions/:questionId/answer')
           err.status = 404;
           return next(err);
         } else {
-          let err = new Error('Question ' + req.params.questionId+ " not found");
+          let err = new Error('Question ' + req.params.questionId + " not found");
           err.status = 404;
           return next(err);
         }
@@ -506,11 +507,11 @@ productRouter.route('/:productId/questions/:questionId/answer')
     Products.findById(req.params.productId, 'questionAnswers')
       .then((product) => {
         if (product && product.questionAnswers.id(req.params.questionId)) {
-            product.questionAnswers.id(req.params.questionId).answer.remove();
-            product.save()
-              .then((product) => {
-                res.status(200).json(product);
-              }, (err) => next(err));
+          product.questionAnswers.id(req.params.questionId).answer.remove();
+          product.save()
+            .then((product) => {
+              res.status(200).json(product);
+            }, (err) => next(err));
         }
         else if (!product) {
           err = new Error('Product ' + req.params.productId + ' not found');
@@ -574,6 +575,17 @@ productRouter.route('/:productId')
       }, (err) => next(err))
       .catch((err) => next(err));
   });
+
+  productRouter.route('/admins/dropindex')
+    .get(cors.corsWithOptions, authenticate.verifyUser, authenticate.verifyAdmin, (req, res, next) => {
+      console.log("hello");
+      Products.collection.dropIndexes()
+        .then(resp => {
+          res.status(200).json(resp);
+        }, err => {
+          res.status(403).json(err);
+        })
+    })
 
 
 

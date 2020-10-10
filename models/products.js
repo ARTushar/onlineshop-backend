@@ -10,7 +10,6 @@ const reviewSchema = Schema({
     author: {
         type: Schema.Types.ObjectId,
         ref: 'User',
-        required: true
     },
     rating: {
         type: Number,
@@ -60,6 +59,10 @@ const productSchema = new Schema({
     },
     price: {
         type: Currency,
+        set: val => {
+            if(typeof(val) === "number") return val.toString();
+            return val;
+        },
         required: true,
         min: 0
     },
@@ -109,7 +112,10 @@ const productSchema = new Schema({
         type: [questionAnswerSchema]
     }
 }, {
-    timestamps: true
+    timestamps: true,
+    toJSON: {
+        getters: true
+    }
 })
 
 

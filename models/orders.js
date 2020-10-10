@@ -3,7 +3,6 @@ const Schema = mongoose.Schema;
 const validator = require('validator');
 
 require('mongoose-currency').loadType(mongoose);
-const Currency = mongoose.Types.Currency;
 const { titleCase, addCountryCode } = require('../lib/utils');
 
 
@@ -101,7 +100,7 @@ const orderSchema = new Schema({
         default: 'pending'
     },
     totalCost: {
-        type: Currency,
+        type: Number,
         rquired: true,
         min: 0
     },
