@@ -10,6 +10,7 @@ orderRouter.route('/admin')
   .options(cors.corsWithOptions, (req, res) => { res.sendStatus(200); })
   .get(cors.corsWithOptions, authenticate.verifyUser, authenticate.verifyAdmin, (req, res, next) => {
     Orders.find(req.query)
+      .populate('user', 'name')
       .then((orders) => {
         res.status(200).json(orders)
       }, err => next(err))
@@ -62,20 +63,70 @@ orderRouter.route('/user')
           }, err => next(err))
           .catch(err => next(err))
       } else {
-        let error = new Error("Order not found in the request body");
-        error.status = 404;
+        let err = new Error("Order not found in the request body");
+        err.status = 404;
         next(err);
       }
   })
   .put(cors.corsWithOptions, authenticate.verifyUser, (req, res, next) => {
-    res.status(403).end("PUT operation not supported on /orders/" + req.params.userId);
+    res.status(403).end("PUT operation not supported on /orders/user");
   })
   .delete(cors.corsWithOptions, authenticate.verifyUser, (req, res, next) => {
-    res.status(403).end("DELETE operation not supported on /orders/" + req.params.userId);
+    res.status(403).end("DELETE operation not supported on /orders/user");
   })
 
 
 /**
  * 
  */
-// orderRouter.route('/:orderId')
+orderRouter.route('/:orderId')
+  .options(cors.corsWithOptions, (req, res) => res.sendStatus(200))
+  .get(cors.corsWithOptions, authenticate.verifyUser, (req, res, next) => {
+      Orders.findById(req.params.orderId)
+        .populate('products', 'title slug price discount averageRating image')
+        .populate('user', 'name')
+        .then(order => {
+          if (order.user != req.user._id || req.user.admin){
+            let err = new Error("You are not authorized to view this");
+            err.status = 403;
+            return next(err);
+          } else{
+            res.status(200).json(order)
+          }
+        }, err => next(err))
+        .catch(err => next(err))
+  })
+  .post(cors.corsWithOptions, authenticate.verifyUser, authenticate.verifyAdmin, (req, res, next) => {
+    res.status(403).end("POST operation not supported on /orders/" + req.params.orderId);
+  })
+  .put(cors.corsWithOptions, authenticate.verifyUser, authenticate.verifyAdmin, (req, res, next) => {
+    if(req.body){
+    Orders.findById(req.params.orderId)
+      .then(order => {
+        if(req.body.status){
+          order.status = req.body.status;
+        }
+        if(req.body.parcelId){
+          order.parcelId = req.body.parcelId;
+        }
+        if(req.body.parcelAgent){
+          order.parcelAgent = req.body.parcelAgent;
+        }
+        order.save()
+          .then(order => {
+            res.status(200).json(order);
+          }, err => next(err))
+      }, err => next(err))
+      .catch(err => next(err));
+    } else {
+      let err = new Error("No order field found in the request body") 
+      err.status = 404;
+      next(err);
+    }
+  })
+  .delete(cors.corsWithOptions, authenticate.verifyUser, authenticate.verifyAdmin, (req, res, next) => {
+    res.status(403).end("DELETE operation not supported on /orders/" + req.params.orderId);
+  })
+
+
+module.exports = orderRouter;
