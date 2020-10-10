@@ -3,12 +3,11 @@ const categoryRouter = express.Router();
 const authenticate = require('../config/authenticate');
 const cors = require('./cors');
 const Categories = require('../models/category');
-const { json } = require('express');
 
 
 categoryRouter.route('')
   .options(cors.corsWithOptions, (req, res) => res.sendStatus(200))
-  .get(cors.corsWithOptions, authenticate.verifyUser, authenticate.verifyAdmin, (req, res, next) => {
+  .get(cors.corsWithOptions, (req, res, next) => {
     Categories.find(req.query)
       .then(categories => {
         res.status(200).json(categories)
@@ -62,8 +61,8 @@ categoryRouter.route('/:categoryId')
             category.subCategory = req.body.subCategory
           }
           category.save()
-          .then(cateogory => {
-            res.status(200).json(cateogry);
+          .then(category => {
+            res.status(200).json(category);
           }, err => next(err))
         }, err => next(err))
         .catch(err => next(err));
