@@ -81,11 +81,6 @@ const productSchema = new Schema({
         type: Number,
         default: Infinity
     },
-    averageRating: {
-        type: Number,
-        min: 1,
-        max: 5
-    },
     sku: {
         type: String,
         trim: true

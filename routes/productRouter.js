@@ -9,7 +9,7 @@ const cors = require('./cors');
 productRouter.route('/')
   .options(cors.corsWithOptions, (req, res) => { res.sendStatus(200); })
   .get(cors.corsWithOptions, (req, res, next) => {
-    Products.find(req.query)
+    Products.find(req.query, "title slug price discount image")
       .then((products) => {
         res.status(200).json(products)
       }, err => next(err))
@@ -42,7 +42,7 @@ productRouter.route('/')
 productRouter.route('/home')
   .options(cors.corsWithOptions, (req, res) => { res.sendStatus(200); })
   .get(cors.corsWithOptions, (req, res, next) => {
-    Products.find(req.query, "title slug price discount averageRating image")
+    Products.find(req.query, "title slug price discount image")
       .then((products) => {
         res.status(200).json(products)
       }, err => next(err))
@@ -234,58 +234,9 @@ productRouter.route('/:productId/reviews/:reviewId')
       .catch((err) => next(err));
   })
 
-
-
-productRouter.route('/:productId')
-  .options(cors.corsWithOptions, (req, res) => {
-    res.sendStatus(200);
-  })
-  .get(cors.corsWithOptions, (req, res, next) => {
-    Products.findById(req.params.productId)
-      .then((product) => {
-        if (product) {
-          res.status(200).json(product);
-        }
-        else {
-          let err = new Error('Product ' + req.params.productId + ' not found');
-          err.status = 404;
-          next(err);
-        }
-      }, err => next(err))
-      .catch(err => next(err));
-  })
-  .post(cors.corsWithOptions, authenticate.verifyUser, authenticate.verifyAdmin,
-    (req, res, next) => {
-      res.status(200).end("POST operation not supported on /products/" + req.params.productId);
-    })
-  .put(cors.corsWithOptions, authenticate.verifyUser, authenticate.verifyAdmin,
-    (req, res, next) => {
-      Products.findByIdAndUpdate(req.params.productId, { $set: req.body }, { new: true })
-        .then((product) => {
-          if (product) {
-            res.status(200).json(product);
-          }
-          else {
-            let err = new Error('Product ' + req.params.productId + ' not found');
-            err.status = 404;
-            next(err);
-          }
-        }, (err) => next(err))
-        .catch((err) => next(err));
-    })
-  .delete(cors.corsWithOptions, authenticate.verifyUser, authenticate.verifyAdmin, (req, res, next) => {
-    Products.findByIdAndRemove(req.params.productId)
-      .then((resp) => {
-        res.status(200).json(resp);
-      }, (err) => next(err))
-      .catch((err) => next(err));
-  });
-
-
 /**
  * Questions 
  */
-
 
 productRouter.route('/:productId/questions')
   .options(cors.corsWithOptions, (req, res) => {
@@ -537,6 +488,8 @@ productRouter.route('/:productId')
   })
   .get(cors.corsWithOptions, (req, res, next) => {
     Products.findById(req.params.productId)
+      .populate('reviews.author', 'name')
+      .populate('questionAnswers.author', 'name')
       .then((product) => {
         if (product) {
           res.status(200).json(product);
@@ -575,18 +528,6 @@ productRouter.route('/:productId')
       }, (err) => next(err))
       .catch((err) => next(err));
   });
-
-  productRouter.route('/admins/dropindex')
-    .get(cors.corsWithOptions, authenticate.verifyUser, authenticate.verifyAdmin, (req, res, next) => {
-      console.log("hello");
-      Products.collection.dropIndexes()
-        .then(resp => {
-          res.status(200).json(resp);
-        }, err => {
-          res.status(403).json(err);
-        })
-    })
-
 
 
 module.exports = productRouter;
