@@ -3,6 +3,8 @@ const productRouter = express.Router();
 const Products = require('../models/products');
 const authenticate = require('../config/authenticate');
 const cors = require('./cors');
+const Orders = require('../models/orders');
+const { json } = require('express');
 
 /*  Handle cors. */
 
@@ -38,6 +40,18 @@ productRouter.route('/')
   });
 
 
+productRouter.route('/admin')
+  .options(cors.corsWithOptions, (req, res) => { res.sendStatus(200); })
+  .get(cors.corsWithOptions, authenticate.verifyUser, authenticate.verifyAdmin, (req, res, next) => {
+    Products.find()
+      .then((products) => {
+        res.status(200).json(products)
+      }, err => next(err))
+      .catch(err => next(err));
+  })
+/**
+ * home products
+ */
 
 productRouter.route('/home')
   .options(cors.corsWithOptions, (req, res) => { res.sendStatus(200); })
@@ -56,6 +70,48 @@ productRouter.route('/home')
   })
   .delete(cors.corsWithOptions, authenticate.verifyUser, authenticate.verifyAdmin, (req, res, next) => {
     res.status(403).end('DELETE operation not supported on /products/home');
+  })
+
+
+/**
+ * 
+ */
+productRouter.route('/search')
+  .options(cors.corsWithOptions, (req, res) => { res.sendStatus(200); })
+  .get(cors.corsWithOptions, (req, res, next) => {
+    console.log(req.query);
+    if(req.query && req.query.input){
+
+      Products.fuzzySearch(req.query.input)
+        .then((products) => {
+          newProducts = [];
+          for(i = 0; i < products.length; i++){
+            newProduct = {};
+            if(products[i]._id != null) newProduct._id = products[i]._id;
+            if(products[i].title != null) newProduct.title = products[i].title;
+            if(products[i].price != null) newProduct.price = products[i].price;
+            if(products[i].discount != null) newProduct.discount = products[i].discount;
+            if(products[i].image != null) newProduct.image = products[i].image;
+            if(products[i].slug != null) newProduct.slug = products[i].slug;
+            newProducts.push(newProduct)
+          }
+          res.status(200).json(newProducts)
+        }, err => next(err))
+        .catch(err => next(err));
+    } else {
+      let err = new Error('No search words in the request body');
+      err.status = 404;
+      next(err);
+    }
+  })
+  .post(cors.corsWithOptions, authenticate.verifyUser, authenticate.verifyAdmin, (req, res, next) => {
+    res.status(403).end('POST operation not supported on /products/search');
+  })
+  .put(cors.corsWithOptions, authenticate.verifyUser, authenticate.verifyAdmin, (req, res, next) => {
+    res.status(403).end('PUT operation not supported on /products/search');
+  })
+  .delete(cors.corsWithOptions, authenticate.verifyUser, authenticate.verifyAdmin, (req, res, next) => {
+    res.status(403).end('DELETE operation not supported on /products/search');
   })
 
 /**
@@ -83,20 +139,67 @@ productRouter.route('/:productId/reviews')
   })
   .post(cors.corsWithOptions, authenticate.verifyUser, (req, res, next) => {
     if (req.body) {
+      let orderId = '';
       if (req.body._id) delete req.body._id;
       if (req.body.createdAt) delete req.body.createdAt;
       if (req.body.updatedAt) delete req.body.updatedAt;
+      if (req.body.orderId) {
+        orderId = req.body.orderId;
+        delete req.body.orderId;
+      } else {
+        let err = new Error('Order Id is not given in the request body');
+        err.status = 404;
+        return next(err);
+      }
       req.body.author = req.user._id;
-      Products.updateOne({ _id: req.params.productId, 'reviews.author': {$or: [null, {$ne: req.user._id }]} },
-        { $push: { reviews: req.body } }, { upsert: true })
-        .then((resp) => {
-          Products.findById(req.params.productId, 'reviews')
-            .populate('reviews.author', 'name')
-            .then((product) => {
-              res.status(200).json(product)
-            }, err => next(err))
-        }, err => next(err))
-        .catch(err => next(err))
+      Orders.findById(orderId)
+        .then(order => {
+          if (order) {
+            let found = -1;
+            for (let i = 0; i < order.products.length; i++) {
+              if (order.products[i].product == req.params.productId) {
+                if (order.products[i].reviewGiven && order.products[i].reviewGiven === true) {
+                  let err = new Error("Already is reviewed")
+                  err.status = 401;
+                  return next(err);
+                }
+                found = i;
+                break;
+              }
+            }
+            if (found === -1) {
+              let err = new Error("Order product not found!")
+              err.status = 404;
+              return next(err);
+            }
+            Products.findById(req.params.productId, 'reviews')
+              .then((product) => {
+                if (product) {
+                  req.body.author = req.user._id;
+                  product.reviews.push(req.body)
+                  product.save()
+                    .then((product) => {
+                      console.log(product);
+                    }, (err) => next(err))
+                } else {
+                  let err = new Error('Product' + req.params.productId + ' not found');
+                  err.status = 404;
+                  return next(err);
+                }
+              }, err => next(err))
+              .catch(err => next(err))
+            order.products[found].reviewGiven = true;
+            order.save()
+              .then(order => {
+                res.status(200).json({ status: 'success', message: 'Successfully posted' });
+              })
+          } else {
+            let err = new Error('Order ' + orderId + ' not found');
+            err.status = 404;
+            return next(err);
+          }
+        })
+
     } else {
       let err = new Error('Review not found in the request body');
       err.status = 404;
@@ -270,7 +373,8 @@ productRouter.route('/:productId/questions')
             product.questionAnswers.push(req.body);
             product.save()
               .then((product) => {
-                res.status(200).json(product);
+                console.log(product);
+                res.status(200).json({ status: 'success', message: 'Successfully posted' });
               }, (err) => next(err))
           } else {
             let err = new Error('Product' + req.params.productId + 'not found');
@@ -529,5 +633,37 @@ productRouter.route('/:productId')
       .catch((err) => next(err));
   });
 
+
+productRouter.route('/product/:slugValue')
+  .options(cors.corsWithOptions, (req, res) => {
+    res.sendStatus(200);
+  })
+  .get(cors.corsWithOptions, (req, res, next) => {
+    Products.findOne({ slug: req.params.slugValue })
+      .populate('reviews.author', 'name')
+      .populate('questionAnswers.author', 'name')
+      .then((product) => {
+        if (product) {
+          res.status(200).json(product);
+        }
+        else {
+          let err = new Error('Product ' + req.params.productId + ' not found');
+          err.status = 404;
+          next(err);
+        }
+      }, err => next(err))
+      .catch(err => next(err));
+  })
+  .post(cors.corsWithOptions, authenticate.verifyUser, authenticate.verifyAdmin,
+    (req, res, next) => {
+      res.status(200).end("POST operation not supported on /products/product" + req.params.slugValue);
+    })
+  .put(cors.corsWithOptions, authenticate.verifyUser, authenticate.verifyAdmin,
+    (req, res, next) => {
+      res.status(200).end("PUT operation not supported on /products/product" + req.params.slugValue);
+    })
+  .delete(cors.corsWithOptions, authenticate.verifyUser, authenticate.verifyAdmin, (req, res, next) => {
+    res.status(200).end("DELETE operation not supported on /products/product" + req.params.slugValue);
+  });
 
 module.exports = productRouter;

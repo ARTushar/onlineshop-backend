@@ -44,11 +44,12 @@ const userSchema = new Schema({
             return !value || validator.isMobilePhone(value);
         }
     },
-    image: {
-        type: String,
-        trim: true
-    },
     facebookId: {
+        type: String,
+        trim: true,
+        index: { unique: true, sparse: true }
+    },
+    googleId: {
         type: String,
         trim: true,
         index: { unique: true, sparse: true }

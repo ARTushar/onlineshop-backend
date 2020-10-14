@@ -2,7 +2,7 @@ const express = require('express');
 const voucherRouter = express.Router();
 const authenticate = require('../config/authenticate');
 const cors = require('./cors');
-const Vouchers = require('../models/voucher');
+const Vouchers = require('../models/vouchers');
 
 
 voucherRouter.route('')
@@ -82,3 +82,6 @@ voucherRouter.route('/:voucherId')
       }, (err) => next(err))
       .catch((err) => next(err));
   });
+
+
+module.exports = voucherRouter;

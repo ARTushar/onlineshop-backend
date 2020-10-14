@@ -51,7 +51,7 @@ const shippingSchema = new Schema({
         minlength: 11,
         maxlength: 14,
         set: addCountryCode,
-        validate: validator.isMobilePhone(value)
+        validate: value => !value || validator.isMobilePhone(value)
     }
 });
 
@@ -59,12 +59,14 @@ const productSchema = Schema({
     product: {
         type: Schema.Types.ObjectId,
         ref: 'Product',
-        required: true
     },
     quantity: {
         type: Number,
         min: 1,
-        required: true
+    },
+    reviewGiven: {
+        type: Boolean,
+        default: false
     }
 });
 
@@ -92,17 +94,21 @@ const orderSchema = new Schema({
     },
     products: {
         type: [productSchema],
-        validate: (v) => Array.isArray(v) && v.length > 1
+        validate: (v) => Array.isArray(v) && v.length >= 1
     },
     status: {
         type: String,
         enum: ['pending', 'confirmed', 'onDelivery', 'delivered', 'cancelled'],
         default: 'pending'
     },
-    totalCost: {
+    subTotalCost: {
         type: Number,
-        rquired: true,
         min: 0
+    },
+    deliveryCost: {
+        type: Number,
+        min: 0,
+        default: 100
     },
     voucher: {
         type: Schema.Types.ObjectId,

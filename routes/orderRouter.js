@@ -32,41 +32,48 @@ orderRouter.route('/admin')
  */
 
 orderRouter.route('/user')
-  .options(cors.corsWithOptions, (req, res) => res.sendStatus(200))
+  .options(cors.corsWithOptions, (req, res) => {res.sendStatus(200)})
   .get(cors.corsWithOptions, authenticate.verifyUser, (req, res, next) => {
-      Orders.find({ author: req.params.userId })
-        .populate('products', 'title slug price discount averageRating image')
+      Orders.find({ user: req.user._id })
+        .populate({
+          path: "products.product",
+          select: 'title slug price discount image'
+        })
         .then(orders => {
+          console.log(orders);
           res.status(200).json(orders)
         }, err => next(err))
         .catch(err => next(err))
   })
   .post(cors.corsWithOptions, authenticate.verifyUser, (req, res, next) => {
-      if (req.json) {
-        if (req.body.status) delete req.body.status;
-        if (req.body.parcelAgent) delete req.body.parcelAgent;
-        if (req.body.parcelId) delete req.body.parcelId;
-        if (req.body.totalCost) delete req.body.totalCost;
+    if (req.body) {
+      if (req.body.status) delete req.body.status;
+      if (req.body.parcelAgent) delete req.body.parcelAgent;
+      if (req.body.parcelId) delete req.body.parcelId;
+      if (req.body.totalCost) delete req.body.totalCost;
 
-        if (req.body._id) delete req.body._id;
-        if (req.body.createdAt) delete req.body.createdAt;
-        if (req.body.updatedAt) delete req.body.updatedAt;
-        req.body.user = req.user._id;
-        Orders.create(req.json)
-          .populate("products", "price discount")
-          .then(order => {
-            order.totalCost = calculateTotalPrice(order.products);
-            order.save()
-              .then(order => {
-                res.status(200).json(order)
-              }, err => next(err))
-          }, err => next(err))
-          .catch(err => next(err))
-      } else {
-        let err = new Error("Order not found in the request body");
-        err.status = 404;
-        next(err);
-      }
+      if (req.body._id) delete req.body._id;
+      if (req.body.createdAt) delete req.body.createdAt;
+      if (req.body.updatedAt) delete req.body.updatedAt;
+      req.body.user = req.user._id;
+      Orders.create(req.body)
+        .then(order => {
+          Orders.findById(order._id)
+            .populate("products.product", "price discount title image slug")
+            .then(order => {
+              order.subTotalCost = calculateTotalPrice(order.products);
+              order.save()
+                .then(order => {
+                  res.status(200).json(order);
+                }, err => next(err))
+            }, err => next(err))
+        }, err => next(err))
+        .catch(err => next(err));
+    } else {
+      let err = new Error("Order not found in the request body");
+      err.status = 404;
+      next(err);
+    }
   })
   .put(cors.corsWithOptions, authenticate.verifyUser, (req, res, next) => {
     res.status(403).end("PUT operation not supported on /orders/user");
@@ -82,44 +89,44 @@ orderRouter.route('/user')
 orderRouter.route('/:orderId')
   .options(cors.corsWithOptions, (req, res) => res.sendStatus(200))
   .get(cors.corsWithOptions, authenticate.verifyUser, (req, res, next) => {
-      Orders.findById(req.params.orderId)
-        .populate('products', 'title slug price discount averageRating image')
-        .populate('user', 'name')
-        .then(order => {
-          if (order.user != req.user._id || req.user.admin){
-            let err = new Error("You are not authorized to view this");
-            err.status = 403;
-            return next(err);
-          } else{
-            res.status(200).json(order)
-          }
-        }, err => next(err))
-        .catch(err => next(err))
+    Orders.findById(req.params.orderId)
+      .populate('products', 'title slug price discount image')
+      .populate('user', 'name')
+      .then(order => {
+        if (order.user != req.user._id || req.user.admin) {
+          let err = new Error("You are not authorized to view this");
+          err.status = 403;
+          return next(err);
+        } else {
+          res.status(200).json(order)
+        }
+      }, err => next(err))
+      .catch(err => next(err))
   })
   .post(cors.corsWithOptions, authenticate.verifyUser, authenticate.verifyAdmin, (req, res, next) => {
     res.status(403).end("POST operation not supported on /orders/" + req.params.orderId);
   })
   .put(cors.corsWithOptions, authenticate.verifyUser, authenticate.verifyAdmin, (req, res, next) => {
-    if(req.body){
-    Orders.findById(req.params.orderId)
-      .then(order => {
-        if(req.body.status){
-          order.status = req.body.status;
-        }
-        if(req.body.parcelId){
-          order.parcelId = req.body.parcelId;
-        }
-        if(req.body.parcelAgent){
-          order.parcelAgent = req.body.parcelAgent;
-        }
-        order.save()
-          .then(order => {
-            res.status(200).json(order);
-          }, err => next(err))
-      }, err => next(err))
-      .catch(err => next(err));
+    if (req.body) {
+      Orders.findById(req.params.orderId)
+        .then(order => {
+          if (req.body.status) {
+            order.status = req.body.status;
+          }
+          if (req.body.parcelId) {
+            order.parcelId = req.body.parcelId;
+          }
+          if (req.body.parcelAgent) {
+            order.parcelAgent = req.body.parcelAgent;
+          }
+          order.save()
+            .then(order => {
+              res.status(200).json(order);
+            }, err => next(err))
+        }, err => next(err))
+        .catch(err => next(err));
     } else {
-      let err = new Error("No order field found in the request body") 
+      let err = new Error("No order field found in the request body")
       err.status = 404;
       next(err);
     }

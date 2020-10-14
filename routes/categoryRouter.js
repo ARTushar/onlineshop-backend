@@ -79,3 +79,5 @@ categoryRouter.route('/:categoryId')
       }, (err) => next(err))
       .catch((err) => next(err));
   });
+
+module.exports = categoryRouter;

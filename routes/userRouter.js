@@ -4,10 +4,22 @@ const User = require('../models/users');
 const passport = require('passport');
 const authenticate = require('../config/authenticate');
 const cors = require('./cors');
+const admin = require('firebase-admin');
+const { auth } = require('firebase-admin');
 
 /* GET users listing. */
 router.options('*', cors.corsWithOptions, (req, res) => { res.sendStatus(200); });
-router.get('/', cors.corsWithOptions, authenticate.verifyUser, authenticate.verifyAdmin, function (req, res, next) {
+
+router.get('', cors.corsWithOptions, authenticate.verifyUser, (req, res, next) => {
+  User.findById(req.user._id, "name mobile email address")
+    .then(user => {
+      res.status(200).json(user);
+    }, err => next(err))
+    .catch(err => next(err))
+})
+
+
+router.get('/admin', cors.corsWithOptions, authenticate.verifyUser, authenticate.verifyAdmin, function (req, res, next) {
   User.find(req.query)
     .then((users) => {
       res.statusCode = 200;
@@ -74,7 +86,7 @@ router.put('/update', cors.corsWithOptions, authenticate.verifyUser, (req, res, 
       if (!user) {
         var err = new Error('User not found!');
         err.status = 404;
-        next(err);
+        return next(err);
       }
       if (req.body.mobile) user.mobile = req.body.mobile;
       if (req.body.email) user.email = req.body.email;
@@ -138,9 +150,161 @@ router.get('/checkJWTtoken', cors.corsWithOptions, (req, res) => {
 // });
 
 /**
+ * google authentication using firebase
+ */
+
+router.post('/google/token', cors.corsWithOptions, (req, res, next) => {
+  if (req.body && req.body.idToken) {
+    admin.auth().verifyIdToken(req.body.idToken)
+      .then(profile => {
+        console.log(JSON.stringify(profile));
+        User.findOne({ $or: [{ googleId: profile.uid }, { email: profile.email }] }, (err, user) => {
+          if (err) {
+            console.log(err);
+            return next(err);
+          }
+          if (!err && user !== null) {
+            console.log("user has already an account!");
+            const token = authenticate.getToken(user);
+            res.status(200).json({
+              success: true,
+              token,
+              status: 'Login Successfull'
+            });
+          } else {
+            console.log("new user!");
+            user = new User({ name: profile.name, email: profile.email });
+            user.googleId = profile.uid;
+            if (profile.mobilePhone)
+              user.mobile = profile.mobile;
+            user.save((err, user) => {
+              if (err)
+                return next(err);
+              else {
+                const token = authenticate.getToken(user);
+                res.status(200).json({
+                  success: true,
+                  token,
+                  status: 'Login Successfull'
+                });
+              }
+            });
+          }
+        });
+      }, err => {
+        next(err)
+      })
+      .catch(err => next(err))
+  } else {
+    let err = new Error("No token id in the request body");
+    err.status = 404;
+    next(err);
+  }
+});
+
+/**
+ * facebook authentication using firebase
+ */
+router.post('/facebook/token', cors.corsWithOptions, (req, res, next) => {
+  if (req.body && req.body.idToken) {
+    admin.auth().verifyIdToken(req.body.idToken)
+      .then(profile => {
+        console.log(JSON.stringify(profile));
+        if (profile.email) {
+          User.findOne({ $or: [{ facebookId: profile.uid }, { email: profile.email }] }, (err, user) => {
+            if (err) {
+              console.log(err);
+              return next(err);
+            }
+            if (!err && user !== null) {
+              console.log("user has already an account!");
+              const token = authenticate.getToken(user);
+              res.status(200).json({
+                success: true,
+                token,
+                status: 'Login Successfull'
+              });
+            } else {
+              console.log("new user!");
+              user = new User({ name: profile.name });
+              user.facebookId = profile.uid;
+              if (profile.mobilePhone)
+                user.mobile = profile.mobile;
+              if (profile.email)
+                user.email = profile.email
+
+              user.save((err, user) => {
+                if (err)
+                  return next(err);
+                else {
+                  const token = authenticate.getToken(user);
+                  res.status(200).json({
+                    success: true,
+                    token,
+                    status: 'Login Successfull'
+                  });
+                }
+              });
+            }
+          });
+        } else {
+          User.findOne({facebookId: profile.uid}, (err, user) => {
+            if (err) {
+              console.log(err);
+              return next(err);
+            }
+            if (!err && user !== null) {
+              console.log("user has already an account!");
+              console.log(JSON.stringify(user));
+              const token = authenticate.getToken(user);
+              res.status(200).json({
+                success: true,
+                token,
+                status: 'Login Successfull'
+              });
+            } else {
+              console.log("new user!");
+              user = new User({ name: profile.name });
+              user.facebookId = profile.uid;
+              if (profile.mobilePhone)
+                user.mobile = profile.mobile;
+
+              user.save((err, user) => {
+                if (err)
+                  return next(err);
+                else {
+                  const token = authenticate.getToken(user);
+                  res.status(200).json({
+                    success: true,
+                    token,
+                    status: 'Login Successfull'
+                  });
+                }
+              });
+            }
+          });
+        }
+      }, err => {
+        next(err)
+      })
+      .catch(err => next(err))
+  } else {
+    let err = new Error("No token id in the request body");
+    err.status = 404;
+    next(err);
+  }
+});
+
+/**
  * a user
  */
-router.route('/:userId')
-  .options(cors.corsWithOptions)
+router.get('/:userId', authenticate.verifyUser, authenticate.verifyAdmin, (req, res, next) => {
+  User.findById(req.params.userId)
+    .then(user => {
+      res.status(200).json(user);
+    }, err => next(err))
+    .catch(err => next(err))
+})
+
 
 module.exports = router;

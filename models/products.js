@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 const slug = require('mongoose-slug-generator');
 mongoose.plugin(slug);
+const mongooseFuzzySearching = require('mongoose-fuzzy-searching');
 const Schema = mongoose.Schema;
 
 require('mongoose-currency').loadType(mongoose);
@@ -113,7 +114,12 @@ const productSchema = new Schema({
     }
 })
 
-
+productSchema.plugin(mongooseFuzzySearching, {
+    fields: [{
+        name: 'title',
+        prefixOnly: true,
+    }]
+});
 
 const Products = mongoose.model('Product', productSchema);
 

@@ -14,6 +14,22 @@ const productRouter = require('./routes/productRouter');
 // const { cors, corsWithOptions } = require('./routes/cors');
 
 
+
+/**
+ * Firebase Admin initialization
+ */
+
+const admin = require("firebase-admin");
+const { FIREBASE_ADMIN }= require('./config/config'); 
+const orderRouter = require('./routes/orderRouter');
+const categoryRouter = require('./routes/categoryRouter');
+const voucherRouter = require('./routes/voucherRouter');
+
+admin.initializeApp({
+  credential: admin.credential.cert(FIREBASE_ADMIN),
+  databaseURL: "https://nipuns-gallery.firebaseio.com"
+});
+
 // databse connection
 console.log(DATABASE_URL);
 const connect = mongoose.connect(DATABASE_URL, {
@@ -50,6 +66,9 @@ app.use(passport.initialize());
 app.use('/', indexRouter);
 app.use('/users', usersRouter);
 app.use('/products', productRouter);
+app.use('/orders', orderRouter);
+app.use('/categories', categoryRouter);
+app.use('/vouchers', voucherRouter);
 
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {
