@@ -5,6 +5,7 @@ const authenticate = require('../config/authenticate');
 const cors = require('./cors');
 const Orders = require('../models/orders');
 const { json } = require('express');
+const Categories = require('../models/category');
 
 /*  Handle cors. */
 
@@ -56,9 +57,17 @@ productRouter.route('/admin')
 productRouter.route('/home')
   .options(cors.corsWithOptions, (req, res) => { res.sendStatus(200); })
   .get(cors.corsWithOptions, (req, res, next) => {
-    Products.find(req.query, "title slug price discount image")
+    Products.find(req.query, "title slug price discount image categories")
       .then((products) => {
-        res.status(200).json(products)
+        let homeProducts = {}
+
+        for(let i = 0; i < products.length; i++){
+          let category = products[i].categories[0];
+          if(!homeProducts[category])
+            homeProducts[category] = [];
+          homeProducts[category].push(products[i])
+        }
+        res.status(200).json(homeProducts)
       }, err => next(err))
       .catch(err => next(err));
   })
