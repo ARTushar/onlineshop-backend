@@ -45,6 +45,8 @@ productRouter.route('/admin')
   .options(cors.corsWithOptions, (req, res) => { res.sendStatus(200); })
   .get(cors.corsWithOptions, authenticate.verifyUser, authenticate.verifyAdmin, (req, res, next) => {
     Products.find()
+      .populate('reviews.author', 'name')
+      .populate('questionAnswers.author', 'name')
       .then((products) => {
         res.status(200).json(products)
       }, err => next(err))
