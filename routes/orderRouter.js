@@ -11,6 +11,7 @@ orderRouter.route('/admin')
   .get(cors.corsWithOptions, authenticate.verifyUser, authenticate.verifyAdmin, (req, res, next) => {
     Orders.find(req.query)
       .populate('user', 'name')
+      .populate('products.product', 'image slug price title discount')
       .then((orders) => {
         res.status(200).json(orders)
       }, err => next(err))
