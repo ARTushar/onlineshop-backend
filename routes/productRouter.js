@@ -7,6 +7,31 @@ const Orders = require('../models/orders');
 const { json } = require('express');
 const Categories = require('../models/category');
 
+
+const multer = require('multer');
+
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, 'public/images');
+  },
+  filename: (req, file, cb) => {
+    cb(null, file.originalname);
+  }
+});
+
+const imageFileFilter = (req, file, cb) => {
+  if (!file.originalname.match(/\.(jpg|jpeg|png|gif)$/)) {
+    return cb(new Error('You can upload only image files!'), false);
+  }
+
+  cb(null, true);
+}
+
+const upload = multer({
+  storage: storage,
+  fileFilter: imageFileFilter
+});
+
 /*  Handle cors. */
 
 productRouter.route('/')
@@ -18,10 +43,30 @@ productRouter.route('/')
       }, err => next(err))
       .catch(err => next(err));
   })
-  .post(cors.corsWithOptions, authenticate.verifyUser, authenticate.verifyAdmin, (req, res, next) => {
+  .post(cors.corsWithOptions, authenticate.verifyUser, authenticate.verifyAdmin, upload.fields([{
+    name: 'images', maxCount: 10
+  }, {
+    name: 'featuredImages', maxCount: 8
+ }]), (req, res, next) => {
     if (req.body._id) delete req.body._id;
     if (req.body.createdAt) delete req.body.createdAt;
     if (req.body.updatedAt) delete req.body.updatedAt;
+    images = []
+    for(let i = 0; i < req.files['images'].length; i++){
+      images.push({
+        color: req.body.color[i],
+        image: req.files['images'][i].path
+      })
+    }
+    delete req.body.colors;
+    featuredImages = [];
+    for(const featuredImageFile of req.files['featuredImages']){
+      featuredImages.push(featuredImageFile.path);
+    }
+    req.body.images = images;
+    req.body.featuredImages = featuredImages;
+    console.log(JSON.stringify(req.body))
+
     Products.create(req.body)
       .then((product) => {
         res.status(200).json(product);
@@ -63,9 +108,9 @@ productRouter.route('/home')
       .then((products) => {
         let homeProducts = {}
 
-        for(let i = 0; i < products.length; i++){
+        for (let i = 0; i < products.length; i++) {
           let category = products[i].categories[0];
-          if(!homeProducts[category])
+          if (!homeProducts[category])
             homeProducts[category] = [];
           homeProducts[category].push(products[i])
         }
@@ -91,19 +136,19 @@ productRouter.route('/search')
   .options(cors.corsWithOptions, (req, res) => { res.sendStatus(200); })
   .get(cors.corsWithOptions, (req, res, next) => {
     console.log(req.query);
-    if(req.query && req.query.input){
+    if (req.query && req.query.input) {
 
       Products.fuzzySearch(req.query.input)
         .then((products) => {
           newProducts = [];
-          for(i = 0; i < products.length; i++){
+          for (i = 0; i < products.length; i++) {
             newProduct = {};
-            if(products[i]._id != null) newProduct._id = products[i]._id;
-            if(products[i].title != null) newProduct.title = products[i].title;
-            if(products[i].price != null) newProduct.price = products[i].price;
-            if(products[i].discount != null) newProduct.discount = products[i].discount;
-            if(products[i].image != null) newProduct.image = products[i].image;
-            if(products[i].slug != null) newProduct.slug = products[i].slug;
+            if (products[i]._id != null) newProduct._id = products[i]._id;
+            if (products[i].title != null) newProduct.title = products[i].title;
+            if (products[i].price != null) newProduct.price = products[i].price;
+            if (products[i].discount != null) newProduct.discount = products[i].discount;
+            if (products[i].image != null) newProduct.image = products[i].image;
+            if (products[i].slug != null) newProduct.slug = products[i].slug;
             newProducts.push(newProduct)
           }
           res.status(200).json(newProducts)

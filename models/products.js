@@ -73,10 +73,14 @@ const productSchema = new Schema({
         min: 0,
         max: 100
     },
-    image: {
-        type: String,
-        required: true,
-        trim: true
+    images: {
+        type: [{
+            color: String,
+            image: String
+        }],
+        validate: (v) => {
+            return Array.isArray(v) && v.length > 0;
+        }
     },
     quantity: {
         type: Number,
@@ -92,7 +96,7 @@ const productSchema = new Schema({
             return Array.isArray(v) && v.length > 0;
         }
     },
-    features:  {
+    features: {
         type: [String]
     },
     specifications: {
