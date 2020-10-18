@@ -51,14 +51,16 @@ productRouter.route('/')
     if (req.body._id) delete req.body._id;
     if (req.body.createdAt) delete req.body.createdAt;
     if (req.body.updatedAt) delete req.body.updatedAt;
+    if(req.body.category) delete req.body.category;
+    if(req.body.subcategory) delete req.body.subcategory;
     images = []
     for(let i = 0; i < req.files['images'].length; i++){
+      const color = req.files['images'][i].originalname.split('_')[0];
       images.push({
-        color: req.body.color[i],
+        color: color,
         image: req.files['images'][i].path
       })
     }
-    delete req.body.colors;
     featuredImages = [];
     for(const featuredImageFile of req.files['featuredImages']){
       featuredImages.push(featuredImageFile.path);
