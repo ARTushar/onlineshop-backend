@@ -11,7 +11,9 @@ module.exports = {
         clientId: process.env.CLIENT_ID,
         clientSecret: process.env.CLIENT_SECRET
     },
-    FIREBASE_ADMIN: FIREBASE_ADMIN_SERVICE
+    FIREBASE_ADMIN: FIREBASE_ADMIN_SERVICE,
+    BUCKET_URL: process.env.GOOGLE_CLOUD_BUCKET_URL,
+    GCLOUD_APPLICATION_CREDENTIALS: process.env.GCLOUD_APPLICATION_CREDENTIALS,
 
 };
 

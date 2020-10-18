@@ -6,6 +6,8 @@ const cors = require('./cors');
 const Orders = require('../models/orders');
 const { json } = require('express');
 const Categories = require('../models/category');
+const { Storage } = require('@google-cloud/storage');
+const { FIREBASE_ADMIN, BUCKET_URL, GCLOUD_APPLICATION_CREDENTIALS } = require('../config/config');
 
 
 const multer = require('multer');
@@ -19,6 +21,15 @@ const storage = multer.diskStorage({
   }
 });
 
+const memoryStorage = multer.memoryStorage();
+
+const googleCloudStorage = new Storage({
+  projectId: FIREBASE_ADMIN.project_id,
+  keyFilename: GCLOUD_APPLICATION_CREDENTIALS
+})
+
+const bucket = googleCloudStorage.bucket(BUCKET_URL);
+
 const imageFileFilter = (req, file, cb) => {
   if (!file.originalname.match(/\.(jpg|jpeg|png|gif)$/)) {
     return cb(new Error('You can upload only image files!'), false);
@@ -28,54 +39,73 @@ const imageFileFilter = (req, file, cb) => {
 }
 
 const upload = multer({
-  storage: storage,
+  storage: memoryStorage,
   fileFilter: imageFileFilter
 });
+
+const uploadToCloud = (file) => new Promise((resolve, reject) => {
+  const blob = bucket.file(file.originalname);
+  const blobStream = blob.createWriteStream({
+    metadata: {
+      contentType: file.mimetype,
+    },
+  })
+  blobStream.on('finish', () => {
+    const publicUrl = `https://firebasestorage.googleapis.com/v0/b/${bucket.name}/o/${encodeURI(blob.name)}?alt=media)`;
+    resolve(publicUrl);
+  })
+    .on('error', (err) => reject(err))
+    .end(file.buffer)
+})
 
 /*  Handle cors. */
 
 productRouter.route('/')
-  .options(cors.corsWithOptions, (req, res) => { res.sendStatus(200); })
-  .get(cors.corsWithOptions, (req, res, next) => {
-    Products.find(req.query, "title slug price discount image")
-      .then((products) => {
-        res.status(200).json(products)
-      }, err => next(err))
-      .catch(err => next(err));
-  })
-  .post(cors.corsWithOptions, authenticate.verifyUser, authenticate.verifyAdmin, upload.fields([{
-    name: 'images', maxCount: 10
-  }, {
-    name: 'featuredImages', maxCount: 8
- }]), (req, res, next) => {
-    if (req.body._id) delete req.body._id;
-    if (req.body.createdAt) delete req.body.createdAt;
-    if (req.body.updatedAt) delete req.body.updatedAt;
-    if(req.body.category) delete req.body.category;
-    if(req.body.subcategory) delete req.body.subcategory;
-    images = []
-    for(let i = 0; i < req.files['images'].length; i++){
-      const color = req.files['images'][i].originalname.split('_')[0];
-      images.push({
-        color: color,
-        image: req.files['images'][i].path
-      })
-    }
-    featuredImages = [];
-    for(const featuredImageFile of req.files['featuredImages']){
-      featuredImages.push(featuredImageFile.path);
-    }
-    req.body.images = images;
-    req.body.featuredImages = featuredImages;
-    console.log(JSON.stringify(req.body))
+    .options(cors.corsWithOptions, (req, res) => { res.sendStatus(200); })
+    .get(cors.corsWithOptions, (req, res, next) => {
+      Products.find(req.query, "title slug price discount image")
+        .then((products) => {
+          res.status(200).json(products)
+        }, err => next(err))
+        .catch(err => next(err));
+    })
+    .post(cors.corsWithOptions, authenticate.verifyUser, authenticate.verifyAdmin, upload.fields([{
+      name: 'images', maxCount: 10
+    }, {
+      name: 'featuredImages', maxCount: 8
+    }]), async (req, res, next) => {
+      if (req.body._id) delete req.body._id;
+      if (req.body.createdAt) delete req.body.createdAt;
+      if (req.body.updatedAt) delete req.body.updatedAt;
+      if (req.body.category) delete req.body.category;
+      if (req.body.subcategory) delete req.body.subcategory;
+      images = []
+      for (let i = 0; i < req.files['images'].length; i++) {
+        const imageUrl = await uploadToCloud(req.files['images'][i])
+        console.log(imageUrl);
+        const color = req.files['images'][i].originalname.split('_')[0];
+        images.push({
+          color: color,
+          image: imageUrl
+        })
+      }
+      featuredImages = [];
+      for (const featuredImageFile of req.files['featuredImages']) {
+        const imageUrl = await uploadToCloud(featuredImageFile)
+        console.log(imageUrl)
+        featuredImages.push(imageUrl);
+      }
+      req.body.images = images;
+      req.body.featuredImages = featuredImages;
+      console.log(JSON.stringify(req.body))
 
-    Products.create(req.body)
-      .then((product) => {
-        res.status(200).json(product);
-      }, (err) => next(err)
-      )
-      .catch((err) => next(err));
-  })
+      Products.create(req.body)
+        .then((product) => {
+          res.status(200).json(product);
+        }, (err) => next(err)
+        )
+        .catch((err) => next(err));
+    })
   .put(cors.corsWithOptions, authenticate.verifyUser, authenticate.verifyAdmin, (req, res, next) => {
     res.status(403).end('PUT operation not supported on /products');
   })
