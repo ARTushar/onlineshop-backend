@@ -63,7 +63,7 @@ const uploadToCloud = (file) => new Promise((resolve, reject) => {
 productRouter.route('/')
     .options(cors.corsWithOptions, (req, res) => { res.sendStatus(200); })
     .get(cors.corsWithOptions, (req, res, next) => {
-      Products.find(req.query, "title slug price discount image")
+      Products.find(req.query, "title slug price discount images")
         .then((products) => {
           res.status(200).json(products)
         }, err => next(err))
@@ -136,7 +136,7 @@ productRouter.route('/admin')
 productRouter.route('/home')
   .options(cors.corsWithOptions, (req, res) => { res.sendStatus(200); })
   .get(cors.corsWithOptions, (req, res, next) => {
-    Products.find(req.query, "title slug price discount image categories")
+    Products.find(req.query, "title slug price discount images categories")
       .then((products) => {
         let homeProducts = {}
 
@@ -179,7 +179,7 @@ productRouter.route('/search')
             if (products[i].title != null) newProduct.title = products[i].title;
             if (products[i].price != null) newProduct.price = products[i].price;
             if (products[i].discount != null) newProduct.discount = products[i].discount;
-            if (products[i].image != null) newProduct.image = products[i].image;
+            if (products[i].images != null) newProduct.images = products[i].images;
             if (products[i].slug != null) newProduct.slug = products[i].slug;
             newProducts.push(newProduct)
           }
