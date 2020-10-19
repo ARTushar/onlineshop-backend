@@ -11,7 +11,7 @@ orderRouter.route('/admin')
   .get(cors.corsWithOptions, authenticate.verifyUser, authenticate.verifyAdmin, (req, res, next) => {
     Orders.find(req.query)
       .populate('user', 'name')
-      .populate('products.product', 'image slug price title discount')
+      .populate('products.product', 'images slug price title discount')
       .then((orders) => {
         res.status(200).json(orders)
       }, err => next(err))
@@ -38,7 +38,7 @@ orderRouter.route('/user')
       Orders.find({ user: req.user._id })
         .populate({
           path: "products.product",
-          select: 'title slug price discount image'
+          select: 'title slug price discount images'
         })
         .then(orders => {
           console.log(orders);
@@ -60,7 +60,7 @@ orderRouter.route('/user')
       Orders.create(req.body)
         .then(order => {
           Orders.findById(order._id)
-            .populate("products.product", "price discount title image slug")
+            .populate("products.product", "price discount title images slug")
             .then(order => {
               order.subTotalCost = calculateTotalPrice(order.products);
               order.save()
@@ -91,7 +91,7 @@ orderRouter.route('/:orderId')
   .options(cors.corsWithOptions, (req, res) => res.sendStatus(200))
   .get(cors.corsWithOptions, authenticate.verifyUser, (req, res, next) => {
     Orders.findById(req.params.orderId)
-      .populate('products', 'title slug price discount image')
+      .populate('products', 'title slug price discount images')
       .populate('user', 'name')
       .then(order => {
         if (order.user != req.user._id || req.user.admin) {
