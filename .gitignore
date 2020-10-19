@@ -63,3 +63,5 @@ typings/
 # migrate-mongo output
 
 migrations
+config/*.json
+config/*.pem
