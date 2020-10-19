@@ -51,7 +51,7 @@ const uploadToCloud = (file) => new Promise((resolve, reject) => {
     },
   })
   blobStream.on('finish', () => {
-    const publicUrl = `https://firebasestorage.googleapis.com/v0/b/${bucket.name}/o/${encodeURI(blob.name)}?alt=media)`;
+    const publicUrl = `https://firebasestorage.googleapis.com/v0/b/${bucket.name}/o/${encodeURI(blob.name)}?alt=media`;
     resolve(publicUrl);
   })
     .on('error', (err) => reject(err))
