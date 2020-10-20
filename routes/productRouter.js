@@ -59,6 +59,15 @@ const uploadToCloud = (file) => new Promise((resolve, reject) => {
     .end(file.buffer)
 })
 
+const deleteFromCloud = async (publicUrl) => {
+  let temp = publicUrl.split('/')
+  temp = temp[temp.length-1];
+  temp = temp.split('?')[0];
+  const fileName = decodeURI(temp);
+
+  await bucket.file(fileName).delete();
+}
+
 /*  Handle cors. */
 
 productRouter.route('/')
@@ -700,20 +709,76 @@ productRouter.route('/:productId')
       res.status(200).end("POST operation not supported on /products/" + req.params.productId);
     })
   .put(cors.corsWithOptions, authenticate.verifyUser, authenticate.verifyAdmin,
-    (req, res, next) => {
-      Products.findByIdAndUpdate(req.params.productId, { $set: req.body }, { new: true })
-        .then((product) => {
-          if (product) {
-            res.status(200).json(product);
+    upload.fields([{
+      name: 'images', maxCount: 10
+    }, {
+      name: 'featuredImages', maxCount: 8
+    }]), (req, res, next) => {
+      if (req.body._id) delete req.body._id;
+      if (req.body.createdAt) delete req.body.createdAt;
+      if (req.body.updatedAt) delete req.body.updatedAt;
+      if (req.body.category) delete req.body.category;
+    if (req.body.subcategory) delete req.body.subcategory;
+
+    Products.findById(req.params.productId)
+      .then(async (product) => {
+        if (product) {
+          images = []
+          for (let i = 0; i < req.files['images'].length; i++) {
+            const imageUrl = await uploadToCloud(req.files['images'][i])
+            console.log(imageUrl);
+            const color = req.files['images'][i].originalname.split('_')[0];
+            images.push({
+              color: color,
+              image: imageUrl
+            })
           }
-          else {
-            let err = new Error('Product ' + req.params.productId + ' not found');
-            err.status = 404;
-            next(err);
+          featuredImages = [];
+          for (const featuredImageFile of req.files['featuredImages']) {
+            const imageUrl = await uploadToCloud(featuredImageFile)
+            console.log(imageUrl)
+            featuredImages.push(imageUrl);
           }
-        }, (err) => next(err))
-        .catch((err) => next(err));
-    })
+          if(req.body.imagesOldKeep){
+            images.push(...req.body.imagesOldKeep);
+          }
+          if(req.body.featuredImagesOldKeep){
+            images.push(...req.body.featuredImagesOldKeep);
+          }
+          if(req.body.imagesOldRemove){
+            for(const oldImages of req.body.imagesOldRemove){
+              deleteFromCloud(oldImages);
+            }
+          }
+          if(req.body.featuredImagesOldRemove){
+            for(const oldFeaturedImages of req.body.featuredImagesOldRemove){
+              deleteFromCloud(oldFeaturedImages);
+            }
+          }
+          product.images = images;
+          product.featuredImages = featuredImages;
+
+          if(req.body.title) product.title = req.body.title;
+          if(req.body.sku) product.sku = req.body.sku;
+          if(req.body.price) product.price = req.body.price;
+          if(req.body.categories) product.categories = req.body.categories;
+          if(req.body.discount) product.discount = req.body.discount;
+          if(req.body.features) product.features = req.body.features;
+          if(req.body.specifications) product.specifications = req.body.specifications;
+
+          product.save()
+            .then(product => {
+              res.status(200).json(product);
+            }, err => next(err))
+        }
+        else {
+          let err = new Error('Product ' + req.params.productId + ' not found');
+          err.status = 404;
+          next(err);
+        }
+      }, (err) => next(err))
+      .catch((err) => next(err));
+  })
   .delete(cors.corsWithOptions, authenticate.verifyUser, authenticate.verifyAdmin, (req, res, next) => {
     Products.findByIdAndRemove(req.params.productId)
       .then((resp) => {
