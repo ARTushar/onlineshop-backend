@@ -712,7 +712,7 @@ productRouter.route('/:productId')
       name: 'images', maxCount: 10
     }, {
       name: 'featuredImages', maxCount: 8
-    }]), async (req, res, next) => {
+    }]), (req, res, next) => {
       if (req.body._id) delete req.body._id;
       if (req.body.createdAt) delete req.body.createdAt;
       if (req.body.updatedAt) delete req.body.updatedAt;
@@ -720,7 +720,7 @@ productRouter.route('/:productId')
     if (req.body.subcategory) delete req.body.subcategory;
 
     Products.findById(req.params.productId)
-      .then((product) => {
+      .then(async (product) => {
         if (product) {
           images = []
           for (let i = 0; i < req.files['images'].length; i++) {
