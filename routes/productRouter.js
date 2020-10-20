@@ -746,7 +746,7 @@ productRouter.route('/:productId')
             images.push(...req.body.imagesOldKeep);
           }
           if (req.body.featuredImagesOldKeep) {
-            images.push(...req.body.featuredImagesOldKeep);
+            featuredImages.push(...req.body.featuredImagesOldKeep);
           }
           if (req.body.imagesOldRemove) {
             for (const oldImages of req.body.imagesOldRemove) {
