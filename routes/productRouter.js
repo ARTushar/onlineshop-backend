@@ -46,6 +46,7 @@ const upload = multer({
 const uploadToCloud = (file) => new Promise((resolve, reject) => {
   const blob = bucket.file(file.originalname);
   const blobStream = blob.createWriteStream({
+    resumable: false,
     metadata: {
       contentType: file.mimetype,
     },

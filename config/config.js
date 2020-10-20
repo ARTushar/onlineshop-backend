@@ -4,19 +4,22 @@ const { FIREBASE_ADMIN_SERVICE } = require('./firebase_admin_service');
 dotenv.config();
 
 module.exports = {
-    DATABASE_URL: process.env.DATABASE_URL,
-    PORT:  process.env.PORT,
-    WHITELIST: [process.env.WHITELIST_1, process.env.WHITELIST_2, process.env.WHITELIST_3],
-    FACEBOOK: {
-        clientId: process.env.CLIENT_ID,
-        clientSecret: process.env.CLIENT_SECRET
-    },
-    FIREBASE_ADMIN: FIREBASE_ADMIN_SERVICE,
-    BUCKET_URL: process.env.GOOGLE_CLOUD_BUCKET_URL,
-    GCLOUD_APPLICATION_CREDENTIALS: process.env.GCLOUD_APPLICATION_CREDENTIALS,
-
+	DATABASE_URL: process.env.DATABASE_URL,
+	PORT: process.env.PORT,
+	WHITELIST: [
+		process.env.WHITELIST_1,
+		process.env.WHITELIST_2,
+		process.env.WHITELIST_3,
+		process.env.WHITELIST_4,
+	],
+	FACEBOOK: {
+		clientId: process.env.CLIENT_ID,
+		clientSecret: process.env.CLIENT_SECRET,
+	},
+	FIREBASE_ADMIN: FIREBASE_ADMIN_SERVICE,
+	BUCKET_URL: process.env.GOOGLE_CLOUD_BUCKET_URL,
+	GCLOUD_APPLICATION_CREDENTIALS: process.env.GCLOUD_APPLICATION_CREDENTIALS,
 };
-
 
 /*
 creating public private key pair
