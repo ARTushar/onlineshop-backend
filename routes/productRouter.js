@@ -717,54 +717,61 @@ productRouter.route('/:productId')
       if (req.body._id) delete req.body._id;
       if (req.body.createdAt) delete req.body.createdAt;
       if (req.body.updatedAt) delete req.body.updatedAt;
-      if (req.body.category) delete req.body.category;
+    if (req.body.category) delete req.body.category;
     if (req.body.subcategory) delete req.body.subcategory;
 
     Products.findById(req.params.productId)
       .then(async (product) => {
         if (product) {
           images = []
-          for (let i = 0; i < req.files['images'].length; i++) {
-            const imageUrl = await uploadToCloud(req.files['images'][i])
-            console.log(imageUrl);
-            const color = req.files['images'][i].originalname.split('_')[0];
-            images.push({
-              color: color,
-              image: imageUrl
-            })
+          if (req.files['images']) {
+            for (let i = 0; i < req.files['images'].length; i++) {
+              const imageUrl = await uploadToCloud(req.files['images'][i])
+              console.log(imageUrl);
+              const color = req.files['images'][i].originalname.split('_')[0];
+              images.push({
+                color: color,
+                image: imageUrl
+              })
+            }
           }
           featuredImages = [];
-          for (const featuredImageFile of req.files['featuredImages']) {
-            const imageUrl = await uploadToCloud(featuredImageFile)
-            console.log(imageUrl)
-            featuredImages.push(imageUrl);
+          if (req.files['featuredImages']) {
+            for (const featuredImageFile of req.files['featuredImages']) {
+              const imageUrl = await uploadToCloud(featuredImageFile)
+              console.log(imageUrl)
+              featuredImages.push(imageUrl);
+            }
           }
-          if(req.body.imagesOldKeep){
+          if (req.body.imagesOldKeep) {
             images.push(...req.body.imagesOldKeep);
           }
-          if(req.body.featuredImagesOldKeep){
-            images.push(...req.body.featuredImagesOldKeep);
+          if (req.body.featuredImagesOldKeep) {
+            featuredImages.push(...req.body.featuredImagesOldKeep);
           }
-          if(req.body.imagesOldRemove){
-            for(const oldImages of req.body.imagesOldRemove){
+          if (req.body.imagesOldRemove) {
+            for (const oldImages of req.body.imagesOldRemove) {
               deleteFromCloud(oldImages);
             }
           }
-          if(req.body.featuredImagesOldRemove){
-            for(const oldFeaturedImages of req.body.featuredImagesOldRemove){
+          if (req.body.featuredImagesOldRemove) {
+            for (const oldFeaturedImages of req.body.featuredImagesOldRemove) {
               deleteFromCloud(oldFeaturedImages);
             }
           }
-          product.images = images;
-          product.featuredImages = featuredImages;
-
-          if(req.body.title) product.title = req.body.title;
-          if(req.body.sku) product.sku = req.body.sku;
-          if(req.body.price) product.price = req.body.price;
-          if(req.body.categories) product.categories = req.body.categories;
-          if(req.body.discount) product.discount = req.body.discount;
-          if(req.body.features) product.features = req.body.features;
-          if(req.body.specifications) product.specifications = req.body.specifications;
+          if (req.body.imagesOldKeep || req.files['images']) {
+            product.images = images;
+          }
+          if (req.body.featuredImagesOldKeep || req.files['featuredImages']) {
+            product.featuredImages = featuredImages;
+          }
+          if (req.body.title) product.title = req.body.title;
+          if (req.body.sku) product.sku = req.body.sku;
+          if (req.body.price) product.price = req.body.price;
+          if (req.body.categories) product.categories = req.body.categories;
+          if (req.body.discount) product.discount = req.body.discount;
+          if (req.body.features) product.features = req.body.features;
+          if (req.body.specifications) product.specifications = req.body.specifications;
 
           product.save()
             .then(product => {
