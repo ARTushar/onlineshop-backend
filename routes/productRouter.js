@@ -744,10 +744,20 @@ productRouter.route('/:productId')
             }
           }
           if (req.body.imagesOldKeep) {
-            images.push(...req.body.imagesOldKeep);
+            if (typeof req.body.imagesOldKeep === 'string') {
+							images.push(JSON.parse(req.body.imagesOldKeep));
+						} else {
+              req.body.imagesOldKeep.map((image) => {
+                images.push(JSON.parse(image));
+              })
+            }
+            // images.push(...req.body.imagesOldKeep);
           }
           if (req.body.featuredImagesOldKeep) {
-            featuredImages.push(...req.body.featuredImagesOldKeep);
+            if (typeof(req.body.featuredImagesOldKeep) === "string") {
+              featuredImages.push(req.body.featuredImagesOldKeep);
+            }
+						else	featuredImages.push(...req.body.featuredImagesOldKeep);
           }
           if (req.body.imagesOldRemove) {
             for (const oldImages of req.body.imagesOldRemove) {
@@ -773,6 +783,9 @@ productRouter.route('/:productId')
           if (req.body.features) product.features = req.body.features;
           if (req.body.specifications) product.specifications = req.body.specifications;
 
+          console.log(JSON.stringify(req.body))
+          console.log(JSON.stringify(images))
+          console.log(JSON.stringify(featuredImages))
           product.save()
             .then(product => {
               res.status(200).json(product);
