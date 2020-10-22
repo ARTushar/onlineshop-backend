@@ -185,12 +185,14 @@ productRouter.route('/search')
           newProducts = [];
           for (i = 0; i < products.length; i++) {
             newProduct = {};
-            if (products[i]._id != null) newProduct._id = products[i]._id;
-            if (products[i].title != null) newProduct.title = products[i].title;
-            if (products[i].price != null) newProduct.price = products[i].price;
-            if (products[i].discount != null) newProduct.discount = products[i].discount;
-            if (products[i].images != null) newProduct.images = products[i].images;
-            if (products[i].slug != null) newProduct.slug = products[i].slug;
+            
+            if (products[i]._id) newProduct._id = products[i]._id;
+            if (products[i].title) newProduct.title = products[i].title;
+            if (products[i].price) newProduct.price = products[i].price;
+            if (products[i].discount) newProduct.discount = products[i].discount;
+            if (products[i].images) newProduct.images = products[i].images;
+            if (products[i].slug) newProduct.slug = products[i].slug;
+            if (products[i]._doc.confidenceScore) newProduct.score = products[i]._doc.confidenceScore;
             newProducts.push(newProduct)
           }
           res.status(200).json(newProducts)
