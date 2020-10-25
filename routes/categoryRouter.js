@@ -8,7 +8,7 @@ const Categories = require('../models/category');
 categoryRouter.route('')
   .options(cors.corsWithOptions, (req, res) => res.sendStatus(200))
   .get(cors.corsWithOptions, (req, res, next) => {
-    Categories.find(req.query)
+    Categories.find(req.query, 'name subCategory')
       .then(categories => {
         res.status(200).json(categories)
       }, err => next(err))

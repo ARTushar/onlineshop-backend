@@ -32,14 +32,13 @@ exports.getToken = (user) => {
 
     const payload = {
         _id,
-        iat: Date.now()
+        // iat: Date.now()
     };
     const signedToken = jwt.sign(payload, PRIVATE_KEY, { expiresIn: expiresIn, algorithm: 'RS256'})
     return signedToken;
 }
 
 exports.jwtPassport = passport.use(new JwtStrategy(options, (jwt_payload, done) => {
-    console.log('JWT payload: ', jwt_payload);
     User.findOne({_id: jwt_payload._id}, (err, user) => {
         if(err) {
             return done(err, false);

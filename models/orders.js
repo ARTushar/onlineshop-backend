@@ -67,6 +67,9 @@ const productSchema = Schema({
     reviewGiven: {
         type: Boolean,
         default: false
+    },
+    color: {
+        type: String
     }
 });
 
