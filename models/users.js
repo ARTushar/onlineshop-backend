@@ -83,7 +83,11 @@ const userSchema = new Schema({
             trim: true,
             default: ''
         }
-    }
+    },
+    wishList:[{
+            type: Schema.Types.ObjectId,
+            ref: 'Product',
+        }]
 }, {
     timestamps: true
 })

@@ -11,7 +11,8 @@ const { auth } = require('firebase-admin');
 router.options('*', cors.corsWithOptions, (req, res) => { res.sendStatus(200); });
 
 router.get('', cors.corsWithOptions, authenticate.verifyUser, (req, res, next) => {
-  User.findById(req.user._id, "name mobile email address")
+  User.findById(req.user._id, "name mobile email address wishList")
+    .populate('wishList', 'images title price discount slug reviews')
     .then(user => {
       res.status(200).json(user);
     }, err => next(err))
@@ -111,16 +112,6 @@ router.put('/update', cors.corsWithOptions, authenticate.verifyUser, (req, res, 
     }, err => next(err))
     .catch(err => next(err));
 })
-
-// router.get('/logout', (req, res, next) => {
-//   if (req.user) {
-//     req.logOut()
-//   } else {
-//     var err = new Error('You are not logged in!');
-//     err.status = 403;
-//     next(err);
-//   }
-// });
 
 
 router.get('/checkJWTtoken', cors.corsWithOptions, (req, res, next) => {
@@ -342,6 +333,66 @@ router.get('/:userId', authenticate.verifyUser, authenticate.verifyAdmin, (req, 
     }, err => next(err))
     .catch(err => next(err))
 })
+
+
+/**
+ * wishlist
+ */
+
+router.route('/wishlist/:productId')
+  .post(cors.corsWithOptions, authenticate.verifyUser, (req, res, next) => {
+    User.findById(req.user._id)
+      .then(user => {
+        if (!user) {
+          var err = new Error('User not found!');
+          err.status = 404;
+          return next(err);
+        }
+        if(user.wishList){
+          for(const product of user.wishList){
+            if(product == req.params.productId){
+              let err = new Error('Duplicate product error!');
+              err.status = 400;
+              return next(err)
+            }
+          }
+          user.wishList.push(req.params.productId);
+        } else {
+          user.wishList = [req.params.productId];
+        }
+        user.save()
+          .then(product => {
+            res.status(200).json({success: true})
+          })
+      }, err => next(err))
+      .catch(err => next(err))
+  })
+  .delete(cors.corsWithOptions, authenticate.verifyUser, (req, res, next) => {
+    User.findById(req.user._id)
+      .then(user => {
+        if (!user) {
+          var err = new Error('User not found!');
+          err.status = 404;
+          return next(err);
+        }
+        let k = -1;
+        if (user.wishList) {
+          k = user.wishList.indexOf(req.params.productId);
+          user.wishList.pull(req.params.productId);
+        }
+        if(k === -1){
+          let error = new Error('product not found!')
+          error.status = 404;
+          return next(error);
+        }
+        
+        user.save()
+          .then(product => {
+            res.status(200).json({ success: true })
+          })
+      }, err => next(err))
+      .catch(err => next(err))
+  });
 
 
 module.exports = router;
