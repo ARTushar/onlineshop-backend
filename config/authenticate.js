@@ -26,23 +26,26 @@ const options = {
     algorithms: ['RS256']
 }
 
-exports.getToken = (user) => {
+exports.getToken = (user, type='default') => {
     const _id = user._id;
-    const expiresIn = '1d';
+    let expiresIn;
+    if (type === 'refresh')
+        expiresIn = '3d';
+    else expiresIn = '1h';
 
     const payload = {
         _id,
-        // iat: Date.now()
     };
-    const signedToken = jwt.sign(payload, PRIVATE_KEY, { expiresIn: expiresIn, algorithm: 'RS256'})
+    const signedToken = jwt.sign(payload, PRIVATE_KEY, { expiresIn: expiresIn, algorithm: 'RS256' })
     return signedToken;
 }
 
+
 exports.jwtPassport = passport.use(new JwtStrategy(options, (jwt_payload, done) => {
-    User.findOne({_id: jwt_payload._id}, (err, user) => {
-        if(err) {
+    User.findOne({ _id: jwt_payload._id }, (err, user) => {
+        if (err) {
             return done(err, false);
-        } else if(user) {
+        } else if (user) {
             return done(null, user);
         } else {
             return done(null, false);
@@ -50,10 +53,10 @@ exports.jwtPassport = passport.use(new JwtStrategy(options, (jwt_payload, done) 
     });
 }));
 
-exports.verifyUser = passport.authenticate('jwt', {session: false});
+exports.verifyUser = passport.authenticate('jwt', { session: false });
 
 exports.verifyAdmin = (req, res, next) => {
-    if(req.user.admin) {
+    if (req.user.admin) {
         next();
     } else {
         let err = new Error('You are not authorized to perform this operation!');

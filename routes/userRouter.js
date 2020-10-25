@@ -73,9 +73,10 @@ router.post('/login', cors.corsWithOptions, (req, res, next) => {
         res.json({ success: false, status: 'Login unsuccessful!', err: 'Could not log in user!' });
       }
       let token = authenticate.getToken(req.user);
+      const refreshToken = authenticate.getToken(req.user, 'refresh');
       console.log('validated: ' + token);
       res.statusCode = 200;
-      res.json({ success: true, token: token, status: 'Login successfull!' });
+      res.json({ success: true, token: token, refreshToken, status: 'Login successfull!' });
     });
   })(req, res, next);
 });
@@ -122,7 +123,7 @@ router.put('/update', cors.corsWithOptions, authenticate.verifyUser, (req, res, 
 // });
 
 
-router.get('/checkJWTtoken', cors.corsWithOptions, (req, res) => {
+router.get('/checkJWTtoken', cors.corsWithOptions, (req, res, next) => {
   passport.authenticate('jwt', { session: false }, (err, user, info) => {
     if (err) {
       return next(err);
@@ -136,7 +137,31 @@ router.get('/checkJWTtoken', cors.corsWithOptions, (req, res) => {
       res.setHeader('Content-Type', 'application/json');
       return res.json({ status: 'JWT valid', success: true, user: user });
     }
-  })(req, res);
+  })(req, res, next);
+});
+
+/**
+ * refresh token
+ */
+
+router.get('/token/refresh', cors.corsWithOptions, (req, res, next) => {
+  passport.authenticate('jwt', { session: false }, (err, user, info) => {
+    if (err) {
+      return next(err);
+    }
+    if (!user) {
+      res.status(401).json({ status: 'JWT invalid!', success: false, err: info });
+    } else {
+      const token = authenticate.getToken(user);
+      const refreshToken = authenticate.getToken(user, 'refresh');
+      res.status(200).json({
+        success: true,
+        token,
+        refreshToken,
+        status: 'Refresh Successfull'
+      });
+    }
+  })(req, res, next);
 });
 
 // router.get('/facebook/token', cors.corsWithOptions, passport.authenticate('facebook-token'), (req, res, next) => {
@@ -166,9 +191,11 @@ router.post('/google/token', cors.corsWithOptions, (req, res, next) => {
           if (!err && user !== null) {
             console.log("user has already an account!");
             const token = authenticate.getToken(user);
+            const refreshToken = authenticate.getToken(user, 'refresh');
             res.status(200).json({
               success: true,
               token,
+              refreshToken,
               status: 'Login Successfull'
             });
           } else {
@@ -182,9 +209,11 @@ router.post('/google/token', cors.corsWithOptions, (req, res, next) => {
                 return next(err);
               else {
                 const token = authenticate.getToken(user);
+                const refreshToken = authenticate.getToken(user, 'refresh');
                 res.status(200).json({
                   success: true,
                   token,
+                  refreshToken,
                   status: 'Login Successfull'
                 });
               }
@@ -219,9 +248,11 @@ router.post('/facebook/token', cors.corsWithOptions, (req, res, next) => {
             if (!err && user !== null) {
               console.log("user has already an account!");
               const token = authenticate.getToken(user);
+              const refreshToken = authenticate.getToken(user, 'refresh');
               res.status(200).json({
                 success: true,
                 token,
+                refreshToken,
                 status: 'Login Successfull'
               });
             } else {
@@ -238,9 +269,11 @@ router.post('/facebook/token', cors.corsWithOptions, (req, res, next) => {
                   return next(err);
                 else {
                   const token = authenticate.getToken(user);
+                  const refreshToken = authenticate.getToken(user, 'refresh');
                   res.status(200).json({
                     success: true,
                     token,
+                    refreshToken,
                     status: 'Login Successfull'
                   });
                 }
@@ -248,7 +281,7 @@ router.post('/facebook/token', cors.corsWithOptions, (req, res, next) => {
             }
           });
         } else {
-          User.findOne({facebookId: profile.uid}, (err, user) => {
+          User.findOne({ facebookId: profile.uid }, (err, user) => {
             if (err) {
               console.log(err);
               return next(err);
@@ -257,9 +290,11 @@ router.post('/facebook/token', cors.corsWithOptions, (req, res, next) => {
               console.log("user has already an account!");
               console.log(JSON.stringify(user));
               const token = authenticate.getToken(user);
+              const refreshToken = authenticate.getToken(user, 'refresh');
               res.status(200).json({
                 success: true,
                 token,
+                refreshToken,
                 status: 'Login Successfull'
               });
             } else {
@@ -274,9 +309,11 @@ router.post('/facebook/token', cors.corsWithOptions, (req, res, next) => {
                   return next(err);
                 else {
                   const token = authenticate.getToken(user);
+                  const refreshToken = authenticate.getToken(user, 'refresh');
                   res.status(200).json({
                     success: true,
                     token,
+                    refreshToken,
                     status: 'Login Successfull'
                   });
                 }
