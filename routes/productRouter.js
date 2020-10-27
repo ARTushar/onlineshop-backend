@@ -7,8 +7,20 @@ const Orders = require('../models/orders');
 const { json } = require('express');
 const Categories = require('../models/category');
 const { Storage } = require('@google-cloud/storage');
-const { FIREBASE_ADMIN, BUCKET_URL, GCLOUD_APPLICATION_CREDENTIALS } = require('../config/config');
+const { PUSHER_CONFIG, FIREBASE_ADMIN, BUCKET_URL, GCLOUD_APPLICATION_CREDENTIALS } = require('../config/config');
 
+/**
+ * pusher configuration
+ */
+var Pusher = require('pusher');
+
+var pusher = new Pusher({
+  appId: PUSHER_CONFIG.appId,
+  key: PUSHER_CONFIG.key,
+  secret: PUSHER_CONFIG.secret,
+  cluster: PUSHER_CONFIG.cluster,
+  useTLS: true,
+});
 
 const multer = require('multer');
 
@@ -281,6 +293,11 @@ productRouter.route('/:productId/reviews')
                   product.save()
                     .then((product) => {
                       console.log(product);
+                       pusher.trigger(PUSHER_CONFIG.channel, PUSHER_CONFIG.reviewEvent, {
+                    id: product.reviews[product.reviews.length-1]._id,
+                    message: 'New review has been posted',
+                    time: Date.now()
+                  });
                     }, (err) => next(err))
                 } else {
                   let err = new Error('Product' + req.params.productId + ' not found');
@@ -293,6 +310,7 @@ productRouter.route('/:productId/reviews')
             order.save()
               .then(order => {
                 res.status(200).json({ status: 'success', message: 'Successfully posted' });
+                
               })
           } else {
             let err = new Error('Order ' + orderId + ' not found');
@@ -476,7 +494,13 @@ productRouter.route('/:productId/questions')
               .then((product) => {
                 console.log(product);
                 res.status(200).json({ status: 'success', message: 'Successfully posted' });
+                  pusher.trigger(PUSHER_CONFIG.channel, PUSHER_CONFIG.questionEvent, {
+                    id: product.questionAnswers[product.questionAnswers.length-1]._id,
+                    message: 'New question has been posted',
+                    time: Date.now()
+                  });
               }, (err) => next(err))
+              .catch(err => next(err))
           } else {
             let err = new Error('Product' + req.params.productId + 'not found');
             err.status = 404;

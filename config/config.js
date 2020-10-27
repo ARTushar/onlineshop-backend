@@ -19,6 +19,16 @@ module.exports = {
 	FIREBASE_ADMIN: FIREBASE_ADMIN_SERVICE,
 	BUCKET_URL: process.env.GOOGLE_CLOUD_BUCKET_URL,
 	GCLOUD_APPLICATION_CREDENTIALS: process.env.GCLOUD_APPLICATION_CREDENTIALS,
+	PUSHER_CONFIG: {
+		appId: process.env.PUSHER_APP_ID,
+		key: process.env.PUSHER_KEY,
+		secret: process.env.PUSHER_SECRET,
+		cluster: process.env.PUSHER_CLUSTER,
+		channel: process.env.PUSHER_CHANNEL,
+		orderEvent: process.env.PUSHER_ORDER_EVENT,
+		questionEvent: process.env.PUSHER_QUESTION_EVENT,
+		reviewEvent: process.env.PUSHER_REVIEW_EVENT
+	}
 };
 
 /*

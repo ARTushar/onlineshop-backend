@@ -4,16 +4,17 @@ const Orders = require('../models/orders');
 const authenticate = require('../config/authenticate');
 const cors = require('./cors');
 const { calculateTotalPrice } = require('../lib/utils');
+const {PUSHER_CONFIG} = require('../config/config');
 
 
 var Pusher = require('pusher');
 
 var pusher = new Pusher({
-  appId: '1097690',
-  key: '061416dfda86e113a43f',
-  secret: 'bd9272ec8e31eaf50766',
-  cluster: 'ap2',
-  encrypted: true
+  appId: PUSHER_CONFIG.appId,
+  key: PUSHER_CONFIG.key,
+  secret: PUSHER_CONFIG.secret,
+  cluster: PUSHER_CONFIG.cluster,
+  useTLS: true
 });
 
 // pusher.trigger('my-channel', 'my-event', {
@@ -81,7 +82,8 @@ orderRouter.route('/user')
               order.save()
                 .then(order => {
                   res.status(200).json(order);
-                  pusher.trigger('admin-channel', 'order-event', {
+                  console.log('ordered ');
+                  pusher.trigger(PUSHER_CONFIG.channel, PUSHER_CONFIG.orderEvent, {
                     id: order._id,
                     message: 'New order has been posted',
                     time: Date.now()
