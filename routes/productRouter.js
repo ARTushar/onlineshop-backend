@@ -73,7 +73,8 @@ const deleteFromCloud = async (publicUrl) => {
 productRouter.route('/')
     .options(cors.corsWithOptions, (req, res) => { res.sendStatus(200); })
     .get(cors.corsWithOptions, (req, res, next) => {
-      Products.find(req.query, "title slug price discount images")
+      console.log(req.query);
+      Products.find(req.query, "title slug price discount images reviews")
         .then((products) => {
           res.status(200).json(products)
         }, err => next(err))
@@ -188,7 +189,7 @@ productRouter.route('/search')
             
             if (products[i]._id) newProduct._id = products[i]._id;
             if (products[i].title) newProduct.title = products[i].title;
-            if (products[i].price) newProduce.price = products[i].price;
+            if (products[i].price) newProduct.price = products[i].price;
             if (products[i].discount) newProduct.discount = products[i].discount;
             if (products[i].images) newProduct.images = products[i].images;
             if (products[i].slug) newProduct.slug = products[i].slug;

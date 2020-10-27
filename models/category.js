@@ -6,10 +6,15 @@ const categorySchema = new Schema({
         type: String,
         required: true,
         unique: true,
-        trim: true
+        trim: true,
+        lowercase: true
     },
     subCategory: {
-        type: [String],
+        type: [{
+            type: String,
+            trim: true,
+            lowercase: true
+        }],
     }
 }, {
     timestamps: true

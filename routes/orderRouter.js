@@ -6,6 +6,21 @@ const cors = require('./cors');
 const { calculateTotalPrice } = require('../lib/utils');
 
 
+var Pusher = require('pusher');
+
+var pusher = new Pusher({
+  appId: '1097690',
+  key: '061416dfda86e113a43f',
+  secret: 'bd9272ec8e31eaf50766',
+  cluster: 'ap2',
+  encrypted: true
+});
+
+// pusher.trigger('my-channel', 'my-event', {
+//   'message': 'hello mara'
+// });
+
+
 orderRouter.route('/admin')
   .options(cors.corsWithOptions, (req, res) => { res.sendStatus(200); })
   .get(cors.corsWithOptions, authenticate.verifyUser, authenticate.verifyAdmin, (req, res, next) => {
@@ -66,6 +81,11 @@ orderRouter.route('/user')
               order.save()
                 .then(order => {
                   res.status(200).json(order);
+                  pusher.trigger('admin-channel', 'order-event', {
+                    id: order._id,
+                    message: 'New order has been posted',
+                    time: Date.now()
+                  })
                 }, err => next(err))
             }, err => next(err))
         }, err => next(err))
