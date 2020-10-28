@@ -113,7 +113,7 @@ orderRouter.route('/:orderId')
   .options(cors.corsWithOptions, (req, res) => res.sendStatus(200))
   .get(cors.corsWithOptions, authenticate.verifyUser, (req, res, next) => {
     Orders.findById(req.params.orderId)
-      .populate('products', 'title slug price discount images')
+      .populate('products.product', 'title slug price discount images')
       .populate('user', 'name')
       .then(order => {
         if (order.user != req.user._id || req.user.admin) {
@@ -139,13 +139,13 @@ orderRouter.route('/:orderId')
           if (req.body.parcelId) {
             order.parcelId = req.body.parcelId;
           }
-          if (req.body.deriveryAgent) {
+          if (req.body.deliveryAgent) {
             order.deliveryAgent = req.body.deliveryAgent;
           }
           order.save()
             .then(order => {
               Orders.findById(order._id)
-              .populate('products', 'title slug price discount images')
+              .populate('products.product', 'title slug price discount images')
               .populate('user', 'name')
               .then(order => {
                 res.status(200).json(order)

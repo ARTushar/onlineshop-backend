@@ -82,6 +82,30 @@ router.post('/login', cors.corsWithOptions, (req, res, next) => {
   })(req, res, next);
 });
 
+router.put('/password', cors.corsWithOptions, authenticate.verifyUser, (req, res, next) => {
+  User.findById(req.user._id)
+    .then((user) => {
+      if(!user){
+        var err = new Error('User not found!');
+        err.status = 404;
+        return next(err);
+      }
+      if(req.body.oldPassword && req.body.newPassword){
+        user.changePassword(req.body.oldPassword, req.body.newPassword)
+          .then(user => {
+            res.status(200).json({status: 'successful'})
+          }, err => next(err))
+          .catch(err => next(err));
+
+      } else{
+        var err = new Error('Password not found in the request body!');
+        err.status = 404;
+        return next(err);
+      }
+    }, err => next(err))
+    .catch(err => next(err));
+})
+
 router.put('/update', cors.corsWithOptions, authenticate.verifyUser, (req, res, next) => {
   User.findById(req.user._id)
     .then((user) => {
