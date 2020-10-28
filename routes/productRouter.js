@@ -159,7 +159,7 @@ productRouter.route('/admin')
 productRouter.route('/home')
   .options(cors.corsWithOptions, (req, res) => { res.sendStatus(200); })
   .get(cors.corsWithOptions, (req, res, next) => {
-    Products.find(req.query, "title slug price discount images categories")
+    Products.find(req.query, "title slug price discount images categories reviews")
       .then((products) => {
         let homeProducts = {}
 
