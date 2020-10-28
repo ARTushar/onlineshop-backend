@@ -139,12 +139,18 @@ orderRouter.route('/:orderId')
           if (req.body.parcelId) {
             order.parcelId = req.body.parcelId;
           }
-          if (req.body.parcelAgent) {
-            order.parcelAgent = req.body.parcelAgent;
+          if (req.body.deriveryAgent) {
+            order.deliveryAgent = req.body.deliveryAgent;
           }
           order.save()
             .then(order => {
-              res.status(200).json(order);
+              Orders.findById(order._id)
+              .populate('products', 'title slug price discount images')
+              .populate('user', 'name')
+              .then(order => {
+                res.status(200).json(order)
+              }, err => next(err))
+              .catch(err => next(err))
             }, err => next(err))
         }, err => next(err))
         .catch(err => next(err));
