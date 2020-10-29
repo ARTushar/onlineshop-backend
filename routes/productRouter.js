@@ -295,6 +295,7 @@ productRouter.route('/:productId/reviews')
                       console.log(product);
                        pusher.trigger(PUSHER_CONFIG.channel, PUSHER_CONFIG.reviewEvent, {
                     id: product.reviews[product.reviews.length-1]._id,
+                    productId: product.id,
                     message: 'New review has been posted',
                     time: Date.now()
                   });
@@ -496,6 +497,7 @@ productRouter.route('/:productId/questions')
                 res.status(200).json({ status: 'success', message: 'Successfully posted' });
                   pusher.trigger(PUSHER_CONFIG.channel, PUSHER_CONFIG.questionEvent, {
                     id: product.questionAnswers[product.questionAnswers.length-1]._id,
+                    productId: product.id,
                     message: 'New question has been posted',
                     time: Date.now()
                   });
