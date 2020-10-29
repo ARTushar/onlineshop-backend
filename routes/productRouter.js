@@ -597,7 +597,8 @@ productRouter.route('/:productId/questions/:questionId')
       .catch(err => next(err));
   })
   .delete(cors.corsWithOptions, authenticate.verifyUser, (req, res, next) => {
-    Products.findById(req.params.productId, 'questionAnswers')
+    Products.findById(req.params.productId)
+      .populate('questionAnswers')
       .then((product) => {
         if (product && product.questionAnswers.id(req.params.questionId)) {
           let user_id = product.questionAnswers.id(req.params.questionId).author;
@@ -638,7 +639,7 @@ productRouter.route('/:productId/questions/:questionId/answer')
   })
   .get(cors.corsWithOptions, authenticate.verifyUser, authenticate.verifyAdmin, (req, res, next) => {
     Products.findById(req.params.productId, 'questionAnswers')
-      .populate('questionAsnwers.author', 'name')
+      .populate('questionAnswers.author', 'name')
       .then((product) => {
         if (product && product.questionAnswers.id(req.params.questionId)) {
           res.status(200).json(product.questionAnswers.id(req.params.questionId).answer);
@@ -659,7 +660,8 @@ productRouter.route('/:productId/questions/:questionId/answer')
     res.status(403).end('POST operation not supported on /products/' + req.params.productId + "/questions/" + req.params.questionId + '/answer');
   })
   .put(cors.corsWithOptions, authenticate.verifyUser, authenticate.verifyAdmin, (req, res, next) => {
-    Products.findById(req.params.productId, 'questionAnswers')
+    Products.findById(req.params.productId)
+      .populate('questionAnswers.author', 'name')
       .then((product) => {
         if (product && product.questionAnswers.id(req.params.questionId)) {
           if (req.body.answer) {
@@ -746,88 +748,88 @@ productRouter.route('/:productId')
       if (req.body._id) delete req.body._id;
       if (req.body.createdAt) delete req.body.createdAt;
       if (req.body.updatedAt) delete req.body.updatedAt;
-    if (req.body.category) delete req.body.category;
-    if (req.body.subcategory) delete req.body.subcategory;
+      if (req.body.category) delete req.body.category;
+      if (req.body.subcategory) delete req.body.subcategory;
 
-    Products.findById(req.params.productId)
-      .then(async (product) => {
-        if (product) {
-          images = []
-          if (req.files['images']) {
-            for (let i = 0; i < req.files['images'].length; i++) {
-              const imageUrl = await uploadToCloud(req.files['images'][i])
-              console.log(imageUrl);
-              const color = req.files['images'][i].originalname.split('_')[0];
-              images.push({
-                color: color,
-                image: imageUrl
-              })
+      Products.findById(req.params.productId)
+        .then(async (product) => {
+          if (product) {
+            images = []
+            if (req.files['images']) {
+              for (let i = 0; i < req.files['images'].length; i++) {
+                const imageUrl = await uploadToCloud(req.files['images'][i])
+                console.log(imageUrl);
+                const color = req.files['images'][i].originalname.split('_')[0];
+                images.push({
+                  color: color,
+                  image: imageUrl
+                })
+              }
             }
-          }
-          featuredImages = [];
-          if (req.files['featuredImages']) {
-            for (const featuredImageFile of req.files['featuredImages']) {
-              const imageUrl = await uploadToCloud(featuredImageFile)
-              console.log(imageUrl)
-              featuredImages.push(imageUrl);
+            featuredImages = [];
+            if (req.files['featuredImages']) {
+              for (const featuredImageFile of req.files['featuredImages']) {
+                const imageUrl = await uploadToCloud(featuredImageFile)
+                console.log(imageUrl)
+                featuredImages.push(imageUrl);
+              }
             }
-          }
-          if (req.body.imagesOldKeep) {
-            if (typeof req.body.imagesOldKeep === 'string') {
-							images.push(JSON.parse(req.body.imagesOldKeep));
-						} else {
-              req.body.imagesOldKeep.map((image) => {
-                images.push(JSON.parse(image));
-              })
+            if (req.body.imagesOldKeep) {
+              if (typeof req.body.imagesOldKeep === 'string') {
+                images.push(JSON.parse(req.body.imagesOldKeep));
+              } else {
+                req.body.imagesOldKeep.map((image) => {
+                  images.push(JSON.parse(image));
+                })
+              }
+              // images.push(...req.body.imagesOldKeep);
             }
-            // images.push(...req.body.imagesOldKeep);
-          }
-          if (req.body.featuredImagesOldKeep) {
-            if (typeof(req.body.featuredImagesOldKeep) === "string") {
-              featuredImages.push(req.body.featuredImagesOldKeep);
+            if (req.body.featuredImagesOldKeep) {
+              if (typeof (req.body.featuredImagesOldKeep) === "string") {
+                featuredImages.push(req.body.featuredImagesOldKeep);
+              }
+              else featuredImages.push(...req.body.featuredImagesOldKeep);
             }
-						else	featuredImages.push(...req.body.featuredImagesOldKeep);
-          }
-          if (req.body.imagesOldRemove) {
-            for (const oldImages of req.body.imagesOldRemove) {
-              deleteFromCloud(oldImages);
+            if (req.body.imagesOldRemove) {
+              for (const oldImages of req.body.imagesOldRemove) {
+                deleteFromCloud(oldImages);
+              }
             }
-          }
-          if (req.body.featuredImagesOldRemove) {
-            for (const oldFeaturedImages of req.body.featuredImagesOldRemove) {
-              deleteFromCloud(oldFeaturedImages);
+            if (req.body.featuredImagesOldRemove) {
+              for (const oldFeaturedImages of req.body.featuredImagesOldRemove) {
+                deleteFromCloud(oldFeaturedImages);
+              }
             }
-          }
-          if (req.body.imagesOldKeep || req.files['images']) {
-            product.images = images;
-          }
-          if (req.body.featuredImagesOldKeep || req.files['featuredImages']) {
-            product.featuredImages = featuredImages;
-          }
-          if (req.body.title) product.title = req.body.title;
-          if (req.body.sku) product.sku = req.body.sku;
-          if (req.body.price) product.price = req.body.price;
-          if (req.body.categories) product.categories = req.body.categories;
-          if (req.body.discount) product.discount = req.body.discount;
-          if (req.body.features) product.features = req.body.features;
-          if (req.body.specifications) product.specifications = req.body.specifications;
+            if (req.body.imagesOldKeep || req.files['images']) {
+              product.images = images;
+            }
+            if (req.body.featuredImagesOldKeep || req.files['featuredImages']) {
+              product.featuredImages = featuredImages;
+            }
+            if (req.body.title) product.title = req.body.title;
+            if (req.body.sku) product.sku = req.body.sku;
+            if (req.body.price) product.price = req.body.price;
+            if (req.body.categories) product.categories = req.body.categories;
+            if (req.body.discount) product.discount = req.body.discount;
+            if (req.body.features) product.features = req.body.features;
+            if (req.body.specifications) product.specifications = req.body.specifications;
 
-          console.log(JSON.stringify(req.body))
-          console.log(JSON.stringify(images))
-          console.log(JSON.stringify(featuredImages))
-          product.save()
-            .then(product => {
-              res.status(200).json(product);
-            }, err => next(err))
-        }
-        else {
-          let err = new Error('Product ' + req.params.productId + ' not found');
-          err.status = 404;
-          next(err);
-        }
-      }, (err) => next(err))
-      .catch((err) => next(err));
-  })
+            console.log(JSON.stringify(req.body))
+            console.log(JSON.stringify(images))
+            console.log(JSON.stringify(featuredImages))
+            product.save()
+              .then(product => {
+                res.status(200).json(product);
+              }, err => next(err))
+          }
+          else {
+            let err = new Error('Product ' + req.params.productId + ' not found');
+            err.status = 404;
+            next(err);
+          }
+        }, (err) => next(err))
+        .catch((err) => next(err));
+    })
   .delete(cors.corsWithOptions, authenticate.verifyUser, authenticate.verifyAdmin, (req, res, next) => {
     Products.findByIdAndRemove(req.params.productId)
       .then((resp) => {
