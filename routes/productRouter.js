@@ -752,6 +752,8 @@ productRouter.route('/:productId')
       if (req.body.subcategory) delete req.body.subcategory;
 
       Products.findById(req.params.productId)
+        .populate('reviews.author', 'name')
+        .populate('questionAnswers.author', 'name')
         .then(async (product) => {
           if (product) {
             images = []
