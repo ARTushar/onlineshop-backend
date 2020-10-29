@@ -116,7 +116,7 @@ orderRouter.route('/:orderId')
       .populate('products.product', 'title slug price discount images')
       .populate('user', 'name')
       .then(order => {
-        if (order.user != req.user._id || req.user.admin) {
+        if (order.user != req.user._id && !req.user.admin) {
           let err = new Error("You are not authorized to view this");
           err.status = 403;
           return next(err);
