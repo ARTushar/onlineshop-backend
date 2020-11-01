@@ -8,6 +8,7 @@ const {PUSHER_CONFIG} = require('../config/config');
 
 
 var Pusher = require('pusher');
+const Locations = require('../models/locations');
 
 var pusher = new Pusher({
   appId: PUSHER_CONFIG.appId,
@@ -62,7 +63,7 @@ orderRouter.route('/user')
         }, err => next(err))
         .catch(err => next(err))
   })
-  .post(cors.corsWithOptions, authenticate.verifyUser, (req, res, next) => {
+  .post(cors.corsWithOptions, authenticate.verifyUser, async (req, res, next) => {
     if (req.body) {
       if (req.body.status) delete req.body.status;
       if (req.body.parcelAgent) delete req.body.parcelAgent;
@@ -72,6 +73,15 @@ orderRouter.route('/user')
       if (req.body._id) delete req.body._id;
       if (req.body.createdAt) delete req.body.createdAt;
       if (req.body.updatedAt) delete req.body.updatedAt;
+      if (req.body.deliveryCost) delete req.body.deliveryCost;
+
+      try {
+        const deliveryCost = await Locations.find({ name: req.body.shippingAddress.district }, 'deliveryCost').exec();
+        req.body.deliveryCost = deliveryCost[0].deliveryCost;
+
+      } catch (err) {
+        return next(err);
+      }
       req.body.user = req.user._id;
       Orders.create(req.body)
         .then(order => {
@@ -145,12 +155,12 @@ orderRouter.route('/:orderId')
           order.save()
             .then(order => {
               Orders.findById(order._id)
-              .populate('products.product', 'title slug price discount images')
-              .populate('user', 'name')
-              .then(order => {
-                res.status(200).json(order)
-              }, err => next(err))
-              .catch(err => next(err))
+                .populate('products.product', 'title slug price discount images')
+                .populate('user', 'name')
+                .then(order => {
+                  res.status(200).json(order)
+                }, err => next(err))
+                .catch(err => next(err))
             }, err => next(err))
         }, err => next(err))
         .catch(err => next(err));

@@ -24,6 +24,7 @@ const { FIREBASE_ADMIN }= require('./config/config');
 const orderRouter = require('./routes/orderRouter');
 const categoryRouter = require('./routes/categoryRouter');
 const voucherRouter = require('./routes/voucherRouter');
+const locationRouter = require('./routes/locationRouter');
 
 admin.initializeApp({
   credential: admin.credential.cert(FIREBASE_ADMIN),
@@ -69,6 +70,7 @@ app.use('/products', productRouter);
 app.use('/orders', orderRouter);
 app.use('/categories', categoryRouter);
 app.use('/vouchers', voucherRouter);
+app.use('/locations', locationRouter);
 
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {

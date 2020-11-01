@@ -128,7 +128,7 @@ router.put('/update', cors.corsWithOptions, authenticate.verifyUser, (req, res, 
       user.save((err, user) => {
         if (err) {
           res.statusCode = 500;
-          res.json({ err: err });
+          res.send(err.message);
           return;
         }
         res.json(user);

@@ -158,20 +158,28 @@ productRouter.route('/admin')
 
 productRouter.route('/home')
   .options(cors.corsWithOptions, (req, res) => { res.sendStatus(200); })
-  .get(cors.corsWithOptions, (req, res, next) => {
-    Products.find(req.query, "title slug price discount images categories reviews")
-      .then((products) => {
-        let homeProducts = {}
+  .get(cors.corsWithOptions, async (req, res, next) => {
 
-        for (let i = 0; i < products.length; i++) {
-          let category = products[i].categories[0];
-          if (!homeProducts[category])
-            homeProducts[category] = [];
-          homeProducts[category].push(products[i])
-        }
-        res.status(200).json(homeProducts)
+    let homeProducts = {}
+    Categories.find({}, 'name')
+      .then(async (categories) => {
+        for (const cateogry of categories) {
+          await Products.find({ categories: cateogry.name }, "title slug price discount images categories reviews")
+            .sort({createdAt: -1})
+            .limit(parseInt(req.query.limit))
+            .then((products) => {
+              for (let i = 0; i < products.length; i++) {
+                let category = products[i].categories[0];
+                if (!homeProducts[category])
+                  homeProducts[category] = [];
+                homeProducts[category].push(products[i])
+              }
+
+            }, err => next(err))
+          }
+          res.status(200).json(homeProducts)
       }, err => next(err))
-      .catch(err => next(err));
+  .catch(err => next(err));
   })
   .post(cors.corsWithOptions, authenticate.verifyUser, authenticate.verifyAdmin, (req, res, next) => {
     res.status(403).end('POST operation not supported on /products/home');
@@ -198,13 +206,14 @@ productRouter.route('/search')
           newProducts = [];
           for (i = 0; i < products.length; i++) {
             newProduct = {};
-            
+
             if (products[i]._id) newProduct._id = products[i]._id;
             if (products[i].title) newProduct.title = products[i].title;
             if (products[i].price) newProduct.price = products[i].price;
             if (products[i].discount) newProduct.discount = products[i].discount;
             if (products[i].images) newProduct.images = products[i].images;
             if (products[i].slug) newProduct.slug = products[i].slug;
+            if (products[i].reviews) newProduct.reviews = products[i].reviews;
             if (products[i]._doc.confidenceScore) newProduct.score = products[i]._doc.confidenceScore;
             newProducts.push(newProduct)
           }
@@ -293,12 +302,12 @@ productRouter.route('/:productId/reviews')
                   product.save()
                     .then((product) => {
                       console.log(product);
-                       pusher.trigger(PUSHER_CONFIG.channel, PUSHER_CONFIG.reviewEvent, {
-                    id: product.reviews[product.reviews.length-1]._id,
-                    productId: product.id,
-                    message: 'New review has been posted',
-                    time: Date.now()
-                  });
+                      pusher.trigger(PUSHER_CONFIG.channel, PUSHER_CONFIG.reviewEvent, {
+                        id: product.reviews[product.reviews.length - 1]._id,
+                        productId: product.id,
+                        message: 'New review has been posted',
+                        time: Date.now()
+                      });
                     }, (err) => next(err))
                 } else {
                   let err = new Error('Product' + req.params.productId + ' not found');
@@ -311,7 +320,7 @@ productRouter.route('/:productId/reviews')
             order.save()
               .then(order => {
                 res.status(200).json({ status: 'success', message: 'Successfully posted' });
-                
+
               })
           } else {
             let err = new Error('Order ' + orderId + ' not found');
@@ -495,12 +504,12 @@ productRouter.route('/:productId/questions')
               .then((product) => {
                 console.log(product);
                 res.status(200).json({ status: 'success', message: 'Successfully posted' });
-                  pusher.trigger(PUSHER_CONFIG.channel, PUSHER_CONFIG.questionEvent, {
-                    id: product.questionAnswers[product.questionAnswers.length-1]._id,
-                    productId: product.id,
-                    message: 'New question has been posted',
-                    time: Date.now()
-                  });
+                pusher.trigger(PUSHER_CONFIG.channel, PUSHER_CONFIG.questionEvent, {
+                  id: product.questionAnswers[product.questionAnswers.length - 1]._id,
+                  productId: product.id,
+                  message: 'New question has been posted',
+                  time: Date.now()
+                });
               }, (err) => next(err))
               .catch(err => next(err))
           } else {
