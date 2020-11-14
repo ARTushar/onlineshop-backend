@@ -294,7 +294,7 @@ productRouter.route('/:productId/reviews')
               err.status = 404;
               return next(err);
             }
-            Products.findById(req.params.productId, 'reviews')
+            Products.findById(req.params.productId, 'reviews title sku')
               .then((product) => {
                 if (product) {
                   req.body.author = req.user._id;
@@ -305,6 +305,8 @@ productRouter.route('/:productId/reviews')
                       pusher.trigger(PUSHER_CONFIG.channel, PUSHER_CONFIG.reviewEvent, {
                         id: product.reviews[product.reviews.length - 1]._id,
                         productId: product.id,
+                        productTitle: product.title,
+                        productSku: product.sku,
                         message: 'New review has been posted',
                         time: Date.now()
                       });
@@ -495,7 +497,7 @@ productRouter.route('/:productId/questions')
       if (req.body.createdAt) delete req.body.createdAt;
       if (req.body.updatedAt) delete req.body.updatedAt;
 
-      Products.findById(req.params.productId, 'questionAnswers')
+      Products.findById(req.params.productId, 'questionAnswers title sku')
         .then((product) => {
           if (product) {
             req.body.author = req.user._id;
@@ -507,6 +509,8 @@ productRouter.route('/:productId/questions')
                 pusher.trigger(PUSHER_CONFIG.channel, PUSHER_CONFIG.questionEvent, {
                   id: product.questionAnswers[product.questionAnswers.length - 1]._id,
                   productId: product.id,
+                  productTitle: product.title,
+                  productSku: product.sku,
                   message: 'New question has been posted',
                   time: Date.now()
                 });

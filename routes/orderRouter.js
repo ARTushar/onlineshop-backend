@@ -95,6 +95,8 @@ orderRouter.route('/user')
                   console.log('ordered ');
                   pusher.trigger(PUSHER_CONFIG.channel, PUSHER_CONFIG.orderEvent, {
                     id: order._id,
+                    subTotalCost: order.subTotalCost,
+                    deliveryLocation: order.shippingAddress.district,
                     message: 'New order has been posted',
                     time: Date.now()
                   })
