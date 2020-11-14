@@ -9,6 +9,7 @@ const {PUSHER_CONFIG} = require('../config/config');
 
 var Pusher = require('pusher');
 const Locations = require('../models/locations');
+const Notifications = require('../models/notifications');
 
 var pusher = new Pusher({
   appId: PUSHER_CONFIG.appId,
@@ -93,13 +94,25 @@ orderRouter.route('/user')
                 .then(order => {
                   res.status(200).json(order);
                   console.log('ordered ');
-                  pusher.trigger(PUSHER_CONFIG.channel, PUSHER_CONFIG.orderEvent, {
-                    id: order._id,
-                    subTotalCost: order.subTotalCost,
-                    deliveryLocation: order.shippingAddress.district,
-                    message: 'New order has been posted',
-                    time: Date.now()
+                  Notifications.create({
+                    type: 'order',
+                    data: {
+                      id: order._id,
+                      subTotalCost: order.subTotalCost,
+                      deliveryLocation: order.shippingAddress.district,
+                    }
                   })
+                    .then(notificaiton => {
+                      console.log(notificaiton);
+                      pusher.trigger(PUSHER_CONFIG.channel, PUSHER_CONFIG.orderEvent, {
+                        id: notificaiton._id,
+                        orderId: notificaiton.data.id,
+                        subTotalCost: notificaiton.data.subTotalCost,
+                        deliveryLocation: notificaiton.data.deliveryLocation,
+                        time: notificaiton.createdAt
+                      })
+                    }, err => next(err))
+                    .catch(err => next(err))
                 }, err => next(err))
             }, err => next(err))
         }, err => next(err))

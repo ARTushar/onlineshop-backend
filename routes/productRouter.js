@@ -302,14 +302,27 @@ productRouter.route('/:productId/reviews')
                   product.save()
                     .then((product) => {
                       console.log(product);
-                      pusher.trigger(PUSHER_CONFIG.channel, PUSHER_CONFIG.reviewEvent, {
-                        id: product.reviews[product.reviews.length - 1]._id,
-                        productId: product.id,
-                        productTitle: product.title,
-                        productSku: product.sku,
-                        message: 'New review has been posted',
-                        time: Date.now()
-                      });
+                      Notifications.create({
+                        type: 'question',
+                        data: {
+                          id: product.reviews[product.reviews.length - 1]._id,
+                          productId: product.id,
+                          productTitle: product.title,
+                          productSku: product.sku,
+                        }
+                      })
+                        .then(notificaiton => {
+                          console.log(notificaiton);
+                          pusher.trigger(PUSHER_CONFIG.channel, PUSHER_CONFIG.reviewEvent, {
+                            id: notificaiton._id,
+                            reviewId: notificaiton.data.id,
+                            productId: notificaiton.data.productId,
+                            productTitle: notificaiton.data.productTitle,
+                            productSku: notificaiton.data.productSku,
+                            createdAt: notificaiton.createdAt
+                          });
+                        }, err => next(err))
+                        .catch(err => next(err))
                     }, (err) => next(err))
                 } else {
                   let err = new Error('Product' + req.params.productId + ' not found');
@@ -506,14 +519,27 @@ productRouter.route('/:productId/questions')
               .then((product) => {
                 console.log(product);
                 res.status(200).json({ status: 'success', message: 'Successfully posted' });
-                pusher.trigger(PUSHER_CONFIG.channel, PUSHER_CONFIG.questionEvent, {
-                  id: product.questionAnswers[product.questionAnswers.length - 1]._id,
-                  productId: product.id,
-                  productTitle: product.title,
-                  productSku: product.sku,
-                  message: 'New question has been posted',
-                  time: Date.now()
-                });
+                Notifications.create({
+                  type: 'question',
+                  data: {
+                    id: product.questionAnswers[product.questionAnswers.length - 1]._id,
+                    productId: product.id,
+                    productTitle: product.title,
+                    productSku: product.sku,
+                  }
+                })
+                  .then(notificaiton => {
+                    console.log(notificaiton);
+                    pusher.trigger(PUSHER_CONFIG.channel, PUSHER_CONFIG.questionEvent, {
+                      id: notificaiton._id,
+                      questionId: notificaiton.data.id,
+                      productId: notificaiton.data.productId,
+                      productTitle: notificaiton.data.productTitle,
+                      productSku: notificaiton.data.productSku,
+                      createdAt: notificaiton.createdAt
+                    });
+                  }, err => next(err))
+                  .catch(err => next(err))
               }, (err) => next(err))
               .catch(err => next(err))
           } else {
