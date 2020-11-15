@@ -8,6 +8,7 @@ const { json } = require('express');
 const Categories = require('../models/category');
 const { Storage } = require('@google-cloud/storage');
 const { PUSHER_CONFIG, FIREBASE_ADMIN, BUCKET_URL, GCLOUD_APPLICATION_CREDENTIALS } = require('../config/config');
+const Notifications = require('../models/notifications');
 
 /**
  * pusher configuration
@@ -303,7 +304,7 @@ productRouter.route('/:productId/reviews')
                     .then((product) => {
                       console.log(product);
                       Notifications.create({
-                        type: 'question',
+                        type: 'review',
                         data: {
                           id: product.reviews[product.reviews.length - 1]._id,
                           productId: product.id,

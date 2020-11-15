@@ -7,7 +7,7 @@ const Notifications = require('../models/notifications');
 
 notificationRouter.route('')
   .options(cors.corsWithOptions, (req, res) => res.sendStatus(200))
-  .get(cors.corsWithOptions, (req, res, next) => {
+  .get(cors.corsWithOptions, authenticate.verifyUser, authenticate.verifyAdmin, (req, res, next) => {
     Notifications.find({})
       .then(notifications => {
         res.status(200).json(notifications)
