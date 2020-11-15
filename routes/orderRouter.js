@@ -109,7 +109,7 @@ orderRouter.route('/user')
                         orderId: notificaiton.data.id,
                         subTotalCost: notificaiton.data.subTotalCost,
                         deliveryLocation: notificaiton.data.deliveryLocation,
-                        time: notificaiton.createdAt
+                        createdAt: notificaiton.createdAt
                       })
                     }, err => next(err))
                     .catch(err => next(err))
