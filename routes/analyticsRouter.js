@@ -106,7 +106,17 @@ analyticsRouter.route('/lastmonthdata')
       }
 
     }
-    res.json(counts).status(200);
+    const ordered = {};
+    Object.keys(counts).sort((key1, key2) => {
+      if(key1.length < key2.length) return -1;
+      if(key1.length > key2.length) return 1;
+      else {
+        if(key1 < key2) return -1;
+        else return 1;
+      }
+    }).map((key) => ordered[key] = counts[key]);
+
+    res.json(ordered).status(200);
   })
 
 
