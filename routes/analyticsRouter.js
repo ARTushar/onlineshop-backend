@@ -68,24 +68,43 @@ analyticsRouter.route('/totalorders')
     }
   })
 
-analyticsRouter.route('/lastmonthorders')
+analyticsRouter.route('/lastmonthdata')
   .options(cors.corsWithOptions, (req, res) => res.sendStatus(200))
   .get(cors.corsWithOptions, authenticate.verifyUser, authenticate.verifyAdmin, async (req, res, next) => {
     let counts = {};
+    let dayTime = 24 * 3600 * 1000;
     let currentTime = Date.now();
-    let prevTime = currentTime - (24 * 3600 * 1000);
-    for (let i = 1; i <= 30; i++) {
-      try {
-        let resp = await Orders.countDocuments({ createdAt: { $gt: prevTime, $lte: currentTime} })
-        counts['entry' + i] = {
-          date: currentTime,
-          value: resp
+    let prevTime = currentTime - 30 * dayTime;
+    let orders;
+    try {
+      orders = await Orders.find({ createdAt: { $gt: prevTime, $lte: currentTime } }, 'createdAt subTotalCost -_id')
+    } catch (err) {
+      return next(err);
+    }
+    for (let order of orders) {
+      let entry = Math.floor((currentTime - order.createdAt) / dayTime) + 1;
+      let entryName = 'entry' + entry;
+      if (counts[entryName]) {
+        counts[entryName].totalOrders += 1
+        counts[entryName].totalSalesValue += order.subTotalCost;
+      } else {
+        counts[entryName] = {
+          date: currentTime - entry * dayTime,
+          totalOrders: 1,
+          totalSalesValue: order.subTotalCost
         }
-      } catch (err) {
-        return next(err);
       }
-      currentTime = prevTime;
-      prevTime = currentTime - (24 * 60 * 60 * 1000);
+    }
+    for(let i = 1; i <= 30; i++){
+      let entryName = 'entry' + i;
+      if(!counts[entryName]){
+        counts[entryName] = {
+          date: currentTime - i * dayTime,
+          totalOrders: 0,
+          totalSalesValue: 0
+        }
+      }
+
     }
     res.json(counts).status(200);
   })
@@ -162,28 +181,28 @@ analyticsRouter.route('/totalsalesvalue')
     }
   })
 
-  analyticsRouter.route('/lastmonthsalesvalue')
-  .options(cors.corsWithOptions, (req, res) => res.sendStatus(200))
-  .get(cors.corsWithOptions, authenticate.verifyUser, authenticate.verifyAdmin, async (req, res, next) => {
-    let counts = {};
-    let currentTime = Date.now();
-    let prevTime = currentTime - (24 * 3600 * 1000);
-    for (let i = 1; i <= 30; i++) {
-      try {
-        let orders = await Orders.find({ createdAt: { $gt: prevTime, $lte: currentTime } }, 'subTotalCost')
-        let totalCost = orders.reduce(((accumulator, currentValue) =>
-          accumulator + currentValue.subTotalCost), 0);
-        counts['entry' + i] = {
-          date: currentTime,
-          value: totalCost 
-        }
-      } catch (err) {
-        return next(err);
-      }
-      currentTime = prevTime;
-      prevTime = currentTime - (24 * 60 * 60 * 1000);
-    }
-    res.json(counts).status(200);
-  })
+// analyticsRouter.route('/lastmonthsalesvalue')
+//   .options(cors.corsWithOptions, (req, res) => res.sendStatus(200))
+//   .get(cors.corsWithOptions, authenticate.verifyUser, authenticate.verifyAdmin, async (req, res, next) => {
+//     let counts = {};
+//     let currentTime = Date.now();
+//     let prevTime = currentTime - (24 * 3600 * 1000);
+//     for (let i = 1; i <= 30; i++) {
+//       try {
+//         let orders = await Orders.find({ createdAt: { $gt: prevTime, $lte: currentTime } }, 'subTotalCost')
+//         let totalCost = orders.reduce(((accumulator, currentValue) =>
+//           accumulator + currentValue.subTotalCost), 0);
+//         counts['entry' + i] = {
+//           date: currentTime,
+//           value: totalCost
+//         }
+//       } catch (err) {
+//         return next(err);
+//       }
+//       currentTime = prevTime;
+//       prevTime = currentTime - (24 * 60 * 60 * 1000);
+//     }
+//     res.json(counts).status(200);
+//   })
 
 module.exports = analyticsRouter;
