@@ -85,7 +85,7 @@ analyticsRouter.route('/lastmonthorders')
         return next(err);
       }
       currentTime = prevTime;
-      prevTime = currentTime - (24 * 60 * 60 * 1000) * i;
+      prevTime = currentTime - (24 * 60 * 60 * 1000);
     }
     res.json(counts).status(200);
   })
@@ -181,7 +181,7 @@ analyticsRouter.route('/totalsalesvalue')
         return next(err);
       }
       currentTime = prevTime;
-      prevTime = currentTime - (24 * 60 * 60 * 1000) * i;
+      prevTime = currentTime - (24 * 60 * 60 * 1000);
     }
     res.json(counts).status(200);
   })
