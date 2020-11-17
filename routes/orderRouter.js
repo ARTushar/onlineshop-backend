@@ -59,7 +59,7 @@ orderRouter.route('/user')
           select: 'title slug price discount images'
         })
         .then(orders => {
-          console.log(orders);
+          // console.log(orders);
           res.status(200).json(orders)
         }, err => next(err))
         .catch(err => next(err))
@@ -93,7 +93,7 @@ orderRouter.route('/user')
               order.save()
                 .then(order => {
                   res.status(200).json(order);
-                  console.log('ordered ');
+                  // console.log('ordered ');
                   Notifications.create({
                     type: 'order',
                     data: {
@@ -103,7 +103,7 @@ orderRouter.route('/user')
                     }
                   })
                     .then(notificaiton => {
-                      console.log(notificaiton);
+                      // console.log(notificaiton);
                       pusher.trigger(PUSHER_CONFIG.channel, PUSHER_CONFIG.orderEvent, {
                         id: notificaiton._id,
                         orderId: notificaiton.data.id,

@@ -33,7 +33,7 @@ router.post('/register', cors.corsWithOptions, (req, res, next) => {
   User.register(new User({ name: req.body.name, mobile: req.body.mobile }), req.body.password, (err, user) => {
     if (err) {
       res.statusCode = 500;
-      console.log(JSON.stringify(err));
+      //console.log(JSON.stringify(err));
       res.json({ err: err });
     } else {
       user.save((err, user) => {
@@ -53,7 +53,7 @@ router.post('/register', cors.corsWithOptions, (req, res, next) => {
 });
 
 router.post('/login', cors.corsWithOptions, (req, res, next) => {
-  console.log(JSON.stringify(req.body));
+  //console.log(JSON.stringify(req.body));
   if (req.body.username.indexOf('@') == -1)
     req.body.mobile = req.body.username;
   else
@@ -75,7 +75,7 @@ router.post('/login', cors.corsWithOptions, (req, res, next) => {
       }
       let token = authenticate.getToken(req.user);
       const refreshToken = authenticate.getToken(req.user, 'refresh');
-      console.log('validated: ' + token);
+      //console.log('validated: ' + token);
       res.statusCode = 200;
       res.json({ success: true, token: token, refreshToken, status: 'Login successfull!' });
     });
@@ -197,14 +197,14 @@ router.post('/google/token', cors.corsWithOptions, (req, res, next) => {
   if (req.body && req.body.idToken) {
     admin.auth().verifyIdToken(req.body.idToken)
       .then(profile => {
-        console.log(JSON.stringify(profile));
+        //console.log(JSON.stringify(profile));
         User.findOne({ $or: [{ googleId: profile.uid }, { email: profile.email }] }, (err, user) => {
           if (err) {
-            console.log(err);
+            //console.log(err);
             return next(err);
           }
           if (!err && user !== null) {
-            console.log("user has already an account!");
+            //console.log("user has already an account!");
             const token = authenticate.getToken(user);
             const refreshToken = authenticate.getToken(user, 'refresh');
             res.status(200).json({
@@ -214,7 +214,7 @@ router.post('/google/token', cors.corsWithOptions, (req, res, next) => {
               status: 'Login Successfull'
             });
           } else {
-            console.log("new user!");
+            //console.log("new user!");
             user = new User({ name: profile.name, email: profile.email });
             user.googleId = profile.uid;
             if (profile.mobilePhone)
@@ -253,15 +253,15 @@ router.post('/facebook/token', cors.corsWithOptions, (req, res, next) => {
   if (req.body && req.body.idToken) {
     admin.auth().verifyIdToken(req.body.idToken)
       .then(profile => {
-        console.log(JSON.stringify(profile));
+        //console.log(JSON.stringify(profile));
         if (profile.email) {
           User.findOne({ $or: [{ facebookId: profile.uid }, { email: profile.email }] }, (err, user) => {
             if (err) {
-              console.log(err);
+              //console.log(err);
               return next(err);
             }
             if (!err && user !== null) {
-              console.log("user has already an account!");
+              //console.log("user has already an account!");
               const token = authenticate.getToken(user);
               const refreshToken = authenticate.getToken(user, 'refresh');
               res.status(200).json({
@@ -271,7 +271,7 @@ router.post('/facebook/token', cors.corsWithOptions, (req, res, next) => {
                 status: 'Login Successfull'
               });
             } else {
-              console.log("new user!");
+              //console.log("new user!");
               user = new User({ name: profile.name });
               user.facebookId = profile.uid;
               if (profile.mobilePhone)
@@ -298,12 +298,12 @@ router.post('/facebook/token', cors.corsWithOptions, (req, res, next) => {
         } else {
           User.findOne({ facebookId: profile.uid }, (err, user) => {
             if (err) {
-              console.log(err);
+              //console.log(err);
               return next(err);
             }
             if (!err && user !== null) {
-              console.log("user has already an account!");
-              console.log(JSON.stringify(user));
+              //console.log("user has already an account!");
+              //console.log(JSON.stringify(user));
               const token = authenticate.getToken(user);
               const refreshToken = authenticate.getToken(user, 'refresh');
               res.status(200).json({
@@ -313,7 +313,7 @@ router.post('/facebook/token', cors.corsWithOptions, (req, res, next) => {
                 status: 'Login Successfull'
               });
             } else {
-              console.log("new user!");
+              //console.log("new user!");
               user = new User({ name: profile.name });
               user.facebookId = profile.uid;
               if (profile.mobilePhone)

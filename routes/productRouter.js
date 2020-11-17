@@ -86,7 +86,7 @@ const deleteFromCloud = async (publicUrl) => {
 productRouter.route('/')
     .options(cors.corsWithOptions, (req, res) => { res.sendStatus(200); })
     .get(cors.corsWithOptions, (req, res, next) => {
-      console.log(req.query);
+      // console.log(req.query);
       Products.find(req.query, "title slug price discount images reviews")
         .then((products) => {
           res.status(200).json(products)
@@ -106,7 +106,7 @@ productRouter.route('/')
       images = []
       for (let i = 0; i < req.files['images'].length; i++) {
         const imageUrl = await uploadToCloud(req.files['images'][i])
-        console.log(imageUrl);
+        // console.log(imageUrl);
         const color = req.files['images'][i].originalname.split('_')[0];
         images.push({
           color: color,
@@ -116,12 +116,12 @@ productRouter.route('/')
       featuredImages = [];
       for (const featuredImageFile of req.files['featuredImages']) {
         const imageUrl = await uploadToCloud(featuredImageFile)
-        console.log(imageUrl)
+        // console.log(imageUrl)
         featuredImages.push(imageUrl);
       }
       req.body.images = images;
       req.body.featuredImages = featuredImages;
-      console.log(JSON.stringify(req.body))
+      // console.log(JSON.stringify(req.body))
 
       Products.create(req.body)
         .then((product) => {
@@ -178,6 +178,7 @@ productRouter.route('/home')
 
             }, err => next(err))
           }
+          //console.log(homeProducts);
           res.status(200).json(homeProducts)
       }, err => next(err))
   .catch(err => next(err));
@@ -199,7 +200,7 @@ productRouter.route('/home')
 productRouter.route('/search')
   .options(cors.corsWithOptions, (req, res) => { res.sendStatus(200); })
   .get(cors.corsWithOptions, (req, res, next) => {
-    console.log(req.query);
+    //console.log(req.query);
     if (req.query && req.query.input) {
 
       Products.fuzzySearch(req.query.input)
@@ -302,7 +303,7 @@ productRouter.route('/:productId/reviews')
                   product.reviews.push(req.body)
                   product.save()
                     .then((product) => {
-                      console.log(product);
+                      //console.log(product);
                       Notifications.create({
                         type: 'review',
                         data: {
@@ -313,7 +314,7 @@ productRouter.route('/:productId/reviews')
                         }
                       })
                         .then(notificaiton => {
-                          console.log(notificaiton);
+                          //console.log(notificaiton);
                           pusher.trigger(PUSHER_CONFIG.channel, PUSHER_CONFIG.reviewEvent, {
                             id: notificaiton._id,
                             reviewId: notificaiton.data.id,
@@ -372,7 +373,7 @@ productRouter.route('/:productId/reviews')
     // }
   })
   .delete(cors.corsWithOptions, authenticate.verifyUser, authenticate.verifyAdmin, (req, res, next) => {
-    console.log('deleting the reviews');
+    //console.log('deleting the reviews');
     Products.findById(req.params.productId, 'reviews')
       .then((product) => {
         if (product) {
@@ -518,7 +519,7 @@ productRouter.route('/:productId/questions')
             product.questionAnswers.push(req.body);
             product.save()
               .then((product) => {
-                console.log(product);
+                //console.log(product);
                 res.status(200).json({ status: 'success', message: 'Successfully posted' });
                 Notifications.create({
                   type: 'question',
@@ -530,7 +531,7 @@ productRouter.route('/:productId/questions')
                   }
                 })
                   .then(notificaiton => {
-                    console.log(notificaiton);
+                    //console.log(notificaiton);
                     pusher.trigger(PUSHER_CONFIG.channel, PUSHER_CONFIG.questionEvent, {
                       id: notificaiton._id,
                       questionId: notificaiton.data.id,
@@ -800,7 +801,7 @@ productRouter.route('/:productId')
             if (req.files['images']) {
               for (let i = 0; i < req.files['images'].length; i++) {
                 const imageUrl = await uploadToCloud(req.files['images'][i])
-                console.log(imageUrl);
+                //console.log(imageUrl);
                 const color = req.files['images'][i].originalname.split('_')[0];
                 images.push({
                   color: color,
@@ -812,7 +813,7 @@ productRouter.route('/:productId')
             if (req.files['featuredImages']) {
               for (const featuredImageFile of req.files['featuredImages']) {
                 const imageUrl = await uploadToCloud(featuredImageFile)
-                console.log(imageUrl)
+                //console.log(imageUrl)
                 featuredImages.push(imageUrl);
               }
             }
@@ -856,9 +857,9 @@ productRouter.route('/:productId')
             if (req.body.features) product.features = req.body.features;
             if (req.body.specifications) product.specifications = req.body.specifications;
 
-            console.log(JSON.stringify(req.body))
-            console.log(JSON.stringify(images))
-            console.log(JSON.stringify(featuredImages))
+            //console.log(JSON.stringify(req.body))
+            //console.log(JSON.stringify(images))
+            //console.log(JSON.stringify(featuredImages))
             product.save()
               .then(product => {
                 res.status(200).json(product);

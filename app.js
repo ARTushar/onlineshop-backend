@@ -34,7 +34,7 @@ admin.initializeApp({
 });
 
 // databse connection
-console.log(DATABASE_URL);
+// console.log(DATABASE_URL);
 const connect = mongoose.connect(DATABASE_URL, {
     useCreateIndex: true,
     useNewUrlParser: true,

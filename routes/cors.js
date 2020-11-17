@@ -3,7 +3,7 @@ const cors = require('cors');
 const { WHITELIST } = require('../config/config');
 let corsOptionsDelegate = (req, callback) => {
     var corsOptions;
-    console.log(req.header('Origin'));
+    // console.log(req.header('Origin'));
     if(WHITELIST.indexOf(req.header('Origin')) !== -1) {
         corsOptions = { origin: true };
     } else {
