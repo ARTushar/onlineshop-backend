@@ -89,7 +89,7 @@ analyticsRouter.route('/lastmonthdata')
         counts[entryName].totalSalesValue += order.subTotalCost;
       } else {
         counts[entryName] = {
-          date: currentTime - entry * dayTime,
+          date: currentTime - (entry - 1) * dayTime,
           totalOrders: 1,
           totalSalesValue: order.subTotalCost
         }
@@ -99,7 +99,7 @@ analyticsRouter.route('/lastmonthdata')
       let entryName = 'entry' + i;
       if(!counts[entryName]){
         counts[entryName] = {
-          date: currentTime - i * dayTime,
+          date: currentTime - (i-1) * dayTime,
           totalOrders: 0,
           totalSalesValue: 0
         }

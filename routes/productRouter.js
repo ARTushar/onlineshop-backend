@@ -74,7 +74,7 @@ const uploadToCloud = (file) => new Promise((resolve, reject) => {
 
 const deleteFromCloud = async (publicUrl) => {
   let temp = publicUrl.split('/')
-  temp = temp[temp.length-1];
+  temp = temp[temp.length - 1];
   temp = temp.split('?')[0];
   const fileName = decodeURI(temp);
 
@@ -84,52 +84,65 @@ const deleteFromCloud = async (publicUrl) => {
 /*  Handle cors. */
 
 productRouter.route('/')
-    .options(cors.corsWithOptions, (req, res) => { res.sendStatus(200); })
-    .get(cors.corsWithOptions, (req, res, next) => {
-      // console.log(req.query);
-      Products.find(req.query, "title slug price discount images reviews")
-        .then((products) => {
-          res.status(200).json(products)
-        }, err => next(err))
-        .catch(err => next(err));
-    })
-    .post(cors.corsWithOptions, authenticate.verifyUser, authenticate.verifyAdmin, upload.fields([{
-      name: 'images', maxCount: 10
-    }, {
-      name: 'featuredImages', maxCount: 8
-    }]), async (req, res, next) => {
-      if (req.body._id) delete req.body._id;
-      if (req.body.createdAt) delete req.body.createdAt;
-      if (req.body.updatedAt) delete req.body.updatedAt;
-      if (req.body.category) delete req.body.category;
-      if (req.body.subcategory) delete req.body.subcategory;
-      images = []
-      for (let i = 0; i < req.files['images'].length; i++) {
-        const imageUrl = await uploadToCloud(req.files['images'][i])
-        // console.log(imageUrl);
-        const color = req.files['images'][i].originalname.split('_')[0];
-        images.push({
-          color: color,
-          image: imageUrl
-        })
+  .options(cors.corsWithOptions, (req, res) => { res.sendStatus(200); })
+  .get(cors.corsWithOptions, (req, res, next) => {
+    // console.log(req.query);
+    Products.find(req.query, "title slug price discount images reviews")
+      .then((products) => {
+        res.status(200).json(products)
+      }, err => next(err))
+      .catch(err => next(err));
+  })
+  .post(cors.corsWithOptions, authenticate.verifyUser, authenticate.verifyAdmin, upload.fields([{
+    name: 'images', maxCount: 10
+  }, {
+    name: 'featuredImages', maxCount: 8
+  }]), async (req, res, next) => {
+    if (req.body._id) delete req.body._id;
+    if (req.body.createdAt) delete req.body.createdAt;
+    if (req.body.updatedAt) delete req.body.updatedAt;
+    if (req.body.category) delete req.body.category;
+    if (req.body.subcategory) delete req.body.subcategory;
+    images = []
+    for (let i = 0; i < req.files['images'].length; i++) {
+      let imageUrl;
+      try {
+        imageUrl = await uploadToCloud(req.files['images'][i])
+      } catch (error) {
+        return next(error);
       }
-      featuredImages = [];
-      for (const featuredImageFile of req.files['featuredImages']) {
-        const imageUrl = await uploadToCloud(featuredImageFile)
+      // console.log(imageUrl);
+      const color = req.files['images'][i].originalname.split('_')[0];
+      images.push({
+        color: color,
+        image: imageUrl
+      })
+    }
+    featuredImages = [];
+    if (req.files['featuredImages']) {
+      for (let i = 0; i < req.files['featuredImages'].length; i++) {
+        const featuredImageFile = req.files['featuredImages'][i];
+        let imageUrl;
+        try {
+          imageUrl = await uploadToCloud(featuredImageFile)
+        } catch (err) {
+          return next(err);
+        }
         // console.log(imageUrl)
         featuredImages.push(imageUrl);
       }
-      req.body.images = images;
-      req.body.featuredImages = featuredImages;
-      // console.log(JSON.stringify(req.body))
+    }
+    req.body.images = images;
+    req.body.featuredImages = featuredImages;
+    // console.log(JSON.stringify(req.body))
 
-      Products.create(req.body)
-        .then((product) => {
-          res.status(200).json(product);
-        }, (err) => next(err)
-        )
-        .catch((err) => next(err));
-    })
+    Products.create(req.body)
+      .then((product) => {
+        res.status(200).json(product);
+      }, (err) => next(err)
+      )
+      .catch((err) => next(err));
+  })
   .put(cors.corsWithOptions, authenticate.verifyUser, authenticate.verifyAdmin, (req, res, next) => {
     res.status(403).end('PUT operation not supported on /products');
   })
@@ -166,7 +179,7 @@ productRouter.route('/home')
       .then(async (categories) => {
         for (const cateogry of categories) {
           await Products.find({ categories: cateogry.name }, "title slug price discount images categories reviews")
-            .sort({createdAt: -1})
+            .sort({ createdAt: -1 })
             .limit(parseInt(req.query.limit))
             .then((products) => {
               for (let i = 0; i < products.length; i++) {
@@ -177,11 +190,11 @@ productRouter.route('/home')
               }
 
             }, err => next(err))
-          }
-          //console.log(homeProducts);
-          res.status(200).json(homeProducts)
+        }
+        //console.log(homeProducts);
+        res.status(200).json(homeProducts)
       }, err => next(err))
-  .catch(err => next(err));
+      .catch(err => next(err));
   })
   .post(cors.corsWithOptions, authenticate.verifyUser, authenticate.verifyAdmin, (req, res, next) => {
     res.status(403).end('POST operation not supported on /products/home');
@@ -834,13 +847,22 @@ productRouter.route('/:productId')
               else featuredImages.push(...req.body.featuredImagesOldKeep);
             }
             if (req.body.imagesOldRemove) {
-              for (const oldImages of req.body.imagesOldRemove) {
-                deleteFromCloud(oldImages);
+              try {
+                for (const oldImages of req.body.imagesOldRemove) {
+                  deleteFromCloud(oldImages);
+                }
+              } catch (err) {
+                return next(err);
               }
             }
             if (req.body.featuredImagesOldRemove) {
-              for (const oldFeaturedImages of req.body.featuredImagesOldRemove) {
-                deleteFromCloud(oldFeaturedImages);
+              try {
+                for (const oldFeaturedImages of req.body.featuredImagesOldRemove) {
+                  deleteFromCloud(oldFeaturedImages);
+                }
+
+              } catch (err) {
+                return next(err);
               }
             }
             if (req.body.imagesOldKeep || req.files['images']) {
