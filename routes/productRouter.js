@@ -878,6 +878,7 @@ productRouter.route('/:productId')
             if (req.body.discount) product.discount = req.body.discount;
             if (req.body.features) product.features = req.body.features;
             if (req.body.specifications) product.specifications = req.body.specifications;
+            if (req.body.quantity) product.quantity = req.body.quantity;
 
             //console.log(JSON.stringify(req.body))
             //console.log(JSON.stringify(images))
