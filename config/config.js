@@ -11,6 +11,7 @@ module.exports = {
 		process.env.WHITELIST_2,
 		process.env.WHITELIST_3,
 		process.env.WHITELIST_4,
+		process.env.WHITELIST_5,
 	],
 	FACEBOOK: {
 		clientId: process.env.CLIENT_ID,
