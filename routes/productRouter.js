@@ -112,7 +112,8 @@ productRouter.route('/')
         return next(error);
       }
       // console.log(imageUrl);
-      const color = req.files['images'][i].originalname.split('_')[0];
+      let color = req.files['images'][i].originalname.split('_')[0];
+      if(color === req.files['images'][i].originalname) color = "default";
       images.push({
         color: color,
         image: imageUrl
