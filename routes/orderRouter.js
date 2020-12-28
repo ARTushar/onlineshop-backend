@@ -4,12 +4,13 @@ const Orders = require('../models/orders');
 const authenticate = require('../config/authenticate');
 const cors = require('./cors');
 const { calculateTotalPrice } = require('../lib/utils');
-const {PUSHER_CONFIG} = require('../config/config');
+const {PUSHER_CONFIG, DEFAULT_USER_ID} = require('../config/config');
 
 
 var Pusher = require('pusher');
 const Locations = require('../models/locations');
 const Notifications = require('../models/notifications');
+const passport = require('passport');
 
 var pusher = new Pusher({
   appId: PUSHER_CONFIG.appId,
@@ -64,7 +65,18 @@ orderRouter.route('/user')
         }, err => next(err))
         .catch(err => next(err))
   })
-  .post(cors.corsWithOptions, authenticate.verifyUser, async (req, res, next) => {
+  .post(cors.corsWithOptions, async (req, res, next) => {
+    await passport.authenticate('jwt', { session: false }, (err, user, info) => {
+      if(err) {
+        return next(err);
+      } 
+      if(!user) {
+        req.body.user = DEFAULT_USER_ID;
+      } else {
+        req.body.user = user._id;
+      }
+    })(req, res, next);
+    
     if (req.body) {
       if (req.body.status) delete req.body.status;
       if (req.body.parcelAgent) delete req.body.parcelAgent;
@@ -83,7 +95,7 @@ orderRouter.route('/user')
       } catch (err) {
         return next(err);
       }
-      req.body.user = req.user._id;
+
       Orders.create(req.body)
         .then(order => {
           Orders.findById(order._id)
