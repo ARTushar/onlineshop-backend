@@ -82,6 +82,35 @@ router.post('/login', cors.corsWithOptions, (req, res, next) => {
   })(req, res, next);
 });
 
+router.post('/login/admin', cors.corsWithOptions, (req, res, next) => {
+  //console.log(JSON.stringify(req.body));
+  if (req.body.username.indexOf('@') == -1)
+    req.body.mobile = req.body.username;
+  else
+    req.body.email = req.body.username;
+  delete req.body.username;
+
+  passport.authenticate('local', (err, user, info) => {
+    if (err) {
+      return next(err);
+    }
+    if (!user) {
+      res.statusCode = 401;
+      res.json({ success: false, status: 'Login unsuccessful!', err: info });
+    }
+    req.logIn(user, (err) => {
+      if (err || !user.admin) {
+        res.status(401).json({ success: false, status: 'Login unsuccessful!', err: 'Could not log in user!' });
+      }
+      let token = authenticate.getToken(req.user);
+      const refreshToken = authenticate.getToken(req.user, 'refresh');
+      //console.log('validated: ' + token);
+      res.statusCode = 200;
+      res.json({ success: true, token: token, refreshToken, status: 'Login successfull!' });
+    });
+  })(req, res, next);
+})
+
 router.put('/password', cors.corsWithOptions, authenticate.verifyUser, (req, res, next) => {
   User.findById(req.user._id)
     .then((user) => {
